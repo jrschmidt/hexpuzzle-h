@@ -3,10 +3,26 @@ describe("Test of Photo Jigsaw Puzzle Widget", function() {
   beforeEach(function() {
     return this.puzzle = new PuzzleApp();
   });
-  return describe("App Creation Test", function() {
+  describe("App Creation Test", function() {
     return it("should create a PuzzleApp object", function() {
       expect(this.puzzle).toBeDefined;
       return expect(this.puzzle).toEqual(jasmine.any(PuzzleApp));
+    });
+  });
+  describe("View Creation Test", function() {
+    it("should create a View object", function() {
+      expect(this.puzzle.puzzle_view).toBeDefined;
+      return expect(this.puzzle.puzzle_view).toEqual(jasmine.any(PuzzleView));
+    });
+    return it("should create an image object from the DOM", function() {
+      expect(this.puzzle.puzzle_view.img).toBeDefined;
+      return expect(this.puzzle.puzzle_view.img).toEqual(jasmine.any(Image));
+    });
+  });
+  return describe("Puzzle piece Tests", function() {
+    return it("should create a puzzle piece object", function() {
+      expect(this.puzzle.piece).toBeDefined;
+      return expect(this.puzzle.piece).toEqual(jasmine.any(PuzzlePiece));
     });
   });
 });
