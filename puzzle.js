@@ -16,6 +16,18 @@ PuzzleApp = (function() {
 PuzzleGridModel = (function() {
   function PuzzleGridModel() {}
 
+  PuzzleGridModel.prototype.get_xy = function(a, b) {
+    var x, xy, y;
+    if (this.in_range(a, b)) {
+      x = 103 + 14.5 * a + (a % 2) / 2;
+      y = 28 + 19 * b + (a % 2) * 10;
+      xy = [x, y];
+    } else {
+      xy = [0, 0];
+    }
+    return xy;
+  };
+
   PuzzleGridModel.prototype.in_range = function(a, b) {
     var ok;
     if (a == null) {

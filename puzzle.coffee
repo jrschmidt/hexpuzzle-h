@@ -11,6 +11,16 @@ class PuzzleApp
 
 class PuzzleGridModel
 
+  get_xy: (a,b) ->
+    if @in_range(a,b)
+      x = 103 + 14.5*a + (a%2)/2
+      y = 28 + 19*b + (a%2)*10
+      xy = [x,y]
+    else
+      xy = [0,0]
+    xy
+
+
   in_range: (a,b) ->
     a = 0 if not a?
     b = 0 if not b?

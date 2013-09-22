@@ -33,7 +33,7 @@ describe("Test of Photo Jigsaw Puzzle Widget", function() {
       expect(this.grid).toBeDefined;
       return expect(this.grid).toEqual(jasmine.any(PuzzleGridModel));
     });
-    return it("should detect out of range hex coordinates", function() {
+    it("should detect out of range hex coordinates", function() {
       expect(this.grid.in_range(0, 0)).toEqual(false);
       expect(this.grid.in_range(0, 4)).toEqual(false);
       expect(this.grid.in_range(1, 1)).toEqual(true);
@@ -56,6 +56,20 @@ describe("Test of Photo Jigsaw Puzzle Widget", function() {
       expect(this.grid.in_range(24, 10)).toEqual(true);
       expect(this.grid.in_range(25, 5)).toEqual(false);
       return expect(this.grid.in_range(33, 7)).toEqual(false);
+    });
+    return it("should convert hex coordinates to pixel coordinates", function() {
+      expect(this.grid.get_xy(1, 1)).toEqual([118, 57]);
+      expect(this.grid.get_xy(1, 2)).toEqual([118, 76]);
+      expect(this.grid.get_xy(1, 3)).toEqual([118, 95]);
+      expect(this.grid.get_xy(2, 1)).toEqual([132, 47]);
+      expect(this.grid.get_xy(2, 2)).toEqual([132, 66]);
+      expect(this.grid.get_xy(2, 3)).toEqual([132, 85]);
+      expect(this.grid.get_xy(3, 1)).toEqual([147, 57]);
+      expect(this.grid.get_xy(3, 2)).toEqual([147, 76]);
+      expect(this.grid.get_xy(3, 3)).toEqual([147, 95]);
+      expect(this.grid.get_xy(4, 1)).toEqual([161, 47]);
+      expect(this.grid.get_xy(4, 2)).toEqual([161, 66]);
+      return expect(this.grid.get_xy(4, 3)).toEqual([161, 85]);
     });
   });
 });
