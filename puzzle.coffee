@@ -26,7 +26,7 @@ class PuzzleView
     @context = @canvas.getContext("2d")
 
     @img = document.getElementById("frame")
-    @context.drawImage(@img,100,0)
+    @context.drawImage(@img,100,30)
 
 
 #   #   #   #   #   #

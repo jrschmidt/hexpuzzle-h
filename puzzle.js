@@ -31,7 +31,7 @@ PuzzleView = (function() {
     this.canvas = document.getElementById("puzzle-widget");
     this.context = this.canvas.getContext("2d");
     this.img = document.getElementById("frame");
-    this.context.drawImage(this.img, 100, 0);
+    this.context.drawImage(this.img, 100, 30);
   }
 
   return PuzzleView;
