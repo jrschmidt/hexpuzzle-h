@@ -2,9 +2,23 @@ class PuzzleApp
 
   constructor: () ->
 
+    @grid = new PuzzleGridModel
     @puzzle_view = new PuzzleView
     @piece = new PuzzlePiece
     @piece.draw_piece()
+
+
+
+class PuzzleGridModel
+
+  in_range: (a,b) ->
+    a = 0 if not a?
+    b = 0 if not b?
+    ok = true
+    ok = false if a<1 || a>24
+    ok = false if b<1 || b>10
+    ok = false if b == 10 && a%2 == 1
+    ok
 
 
 

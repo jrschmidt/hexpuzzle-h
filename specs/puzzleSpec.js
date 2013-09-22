@@ -10,7 +10,7 @@ describe("Test of Photo Jigsaw Puzzle Widget", function() {
     });
   });
   describe("View Creation Test", function() {
-    it("should create a View object", function() {
+    it("should create a view object", function() {
       expect(this.puzzle.puzzle_view).toBeDefined;
       return expect(this.puzzle.puzzle_view).toEqual(jasmine.any(PuzzleView));
     });
@@ -19,10 +19,43 @@ describe("Test of Photo Jigsaw Puzzle Widget", function() {
       return expect(this.puzzle.puzzle_view.img).toEqual(jasmine.any(Image));
     });
   });
-  return describe("Puzzle piece Tests", function() {
+  describe("Puzzle Piece Tests", function() {
     return it("should create a puzzle piece object", function() {
       expect(this.puzzle.piece).toBeDefined;
       return expect(this.puzzle.piece).toEqual(jasmine.any(PuzzlePiece));
+    });
+  });
+  return describe("Puzzle Grid Model Tests", function() {
+    beforeEach(function() {
+      return this.grid = this.puzzle.grid;
+    });
+    it("should create a puzzle grid model", function() {
+      expect(this.grid).toBeDefined;
+      return expect(this.grid).toEqual(jasmine.any(PuzzleGridModel));
+    });
+    return it("should detect out of range hex coordinates", function() {
+      expect(this.grid.in_range(0, 0)).toEqual(false);
+      expect(this.grid.in_range(0, 4)).toEqual(false);
+      expect(this.grid.in_range(1, 1)).toEqual(true);
+      expect(this.grid.in_range(1, 4)).toEqual(true);
+      expect(this.grid.in_range(1, 9)).toEqual(true);
+      expect(this.grid.in_range(1, 10)).toEqual(false);
+      expect(this.grid.in_range(2, 10)).toEqual(true);
+      expect(this.grid.in_range(3, 9)).toEqual(true);
+      expect(this.grid.in_range(3, 10)).toEqual(false);
+      expect(this.grid.in_range(6, 10)).toEqual(true);
+      expect(this.grid.in_range(8, 7)).toEqual(true);
+      expect(this.grid.in_range(13, 6)).toEqual(true);
+      expect(this.grid.in_range(15, 0)).toEqual(false);
+      expect(this.grid.in_range(18, 10)).toEqual(true);
+      expect(this.grid.in_range(19, 10)).toEqual(false);
+      expect(this.grid.in_range(22, 1)).toEqual(true);
+      expect(this.grid.in_range(23, 9)).toEqual(true);
+      expect(this.grid.in_range(23, 10)).toEqual(false);
+      expect(this.grid.in_range(24, 2)).toEqual(true);
+      expect(this.grid.in_range(24, 10)).toEqual(true);
+      expect(this.grid.in_range(25, 5)).toEqual(false);
+      return expect(this.grid.in_range(33, 7)).toEqual(false);
     });
   });
 });
