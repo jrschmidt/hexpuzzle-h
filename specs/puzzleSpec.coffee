@@ -62,18 +62,18 @@ describe "Test of Photo Jigsaw Puzzle Widget", ->
       expect(@grid.in_range(33,7)).toEqual(false)
 
     it "should convert hex coordinates to pixel coordinates", ->
-      expect(@grid.get_xy(1,1)).toEqual([118,57])
-      expect(@grid.get_xy(1,2)).toEqual([118,76])
-      expect(@grid.get_xy(1,3)).toEqual([118,95])
-      expect(@grid.get_xy(2,1)).toEqual([132,47])
-      expect(@grid.get_xy(2,2)).toEqual([132,66])
-      expect(@grid.get_xy(2,3)).toEqual([132,85])
-      expect(@grid.get_xy(3,1)).toEqual([147,57])
-      expect(@grid.get_xy(3,2)).toEqual([147,76])
-      expect(@grid.get_xy(3,3)).toEqual([147,95])
-      expect(@grid.get_xy(4,1)).toEqual([161,47])
-      expect(@grid.get_xy(4,2)).toEqual([161,66])
-      expect(@grid.get_xy(4,3)).toEqual([161,85])
+      expect(@grid.get_xy(1,1)).toEqual([115,55])
+      expect(@grid.get_xy(1,2)).toEqual([115,74])
+      expect(@grid.get_xy(1,3)).toEqual([115,93])
+      expect(@grid.get_xy(2,1)).toEqual([129,45])
+      expect(@grid.get_xy(2,2)).toEqual([129,64])
+      expect(@grid.get_xy(2,3)).toEqual([129,83])
+      expect(@grid.get_xy(3,1)).toEqual([144,55])
+      expect(@grid.get_xy(3,2)).toEqual([144,74])
+      expect(@grid.get_xy(3,3)).toEqual([144,93])
+      expect(@grid.get_xy(4,1)).toEqual([158,45])
+      expect(@grid.get_xy(4,2)).toEqual([158,64])
+      expect(@grid.get_xy(4,3)).toEqual([158,83])
 
 
 

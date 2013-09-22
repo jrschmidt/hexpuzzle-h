@@ -5,8 +5,46 @@ PuzzleApp = (function() {
   function PuzzleApp() {
     this.grid = new PuzzleGridModel;
     this.puzzle_view = new PuzzleView;
-    this.piece = new PuzzlePiece;
-    this.piece.draw_piece();
+    this.piece = new PuzzlePiece(this);
+    this.piece.draw_piece(0, 0);
+    alert(":-)");
+    this.piece.draw_piece(2, 1);
+    alert(":-)");
+    this.piece.draw_piece(3, 1);
+    alert(":-)");
+    this.piece.draw_piece(2, 3);
+    alert(":-)");
+    this.piece.draw_piece(1, 3);
+    alert(":-)");
+    this.piece.draw_piece(4, 3);
+    alert(":-)");
+    this.piece.draw_piece(2, 5);
+    alert(":-)");
+    this.piece.draw_piece(2, 6);
+    alert(":-)");
+    this.piece.draw_piece(3, 7);
+    alert(":-)");
+    this.piece.draw_piece(5, 4);
+    alert(":-)");
+    this.piece.draw_piece(8, 3);
+    alert(":-)");
+    this.piece.draw_piece(8, 1);
+    alert(":-)");
+    this.piece.draw_piece(9, 1);
+    alert(":-)");
+    this.piece.draw_piece(10, 1);
+    alert(":-)");
+    this.piece.draw_piece(13, 6);
+    alert(":-)");
+    this.piece.draw_piece(18, 4);
+    alert(":-)");
+    this.piece.draw_piece(20, 6);
+    alert(":-)");
+    this.piece.draw_piece(21, 2);
+    alert(":-)");
+    this.piece.draw_piece(22, 1);
+    alert(":-)");
+    this.piece.draw_piece(22, 4);
   }
 
   return PuzzleApp;
@@ -17,10 +55,12 @@ PuzzleGridModel = (function() {
   function PuzzleGridModel() {}
 
   PuzzleGridModel.prototype.get_xy = function(a, b) {
-    var x, xy, y;
+    var t_dx, t_dy, x, xy, y;
     if (this.in_range(a, b)) {
-      x = 103 + 14.5 * a + (a % 2) / 2;
-      y = 28 + 19 * b + (a % 2) * 10;
+      t_dx = -3;
+      t_dy = -2;
+      x = 103 + 14.5 * a + (a % 2) / 2 + t_dx;
+      y = 28 + 19 * b + (a % 2) * 10 + t_dy;
       xy = [x, y];
     } else {
       xy = [0, 0];
@@ -54,13 +94,31 @@ PuzzleGridModel = (function() {
 })();
 
 PuzzlePiece = (function() {
-  function PuzzlePiece() {}
+  function PuzzlePiece(puzzle_app) {
+    this.puzzle = puzzle_app;
+    this.grid = this.puzzle.grid;
+    this.dxy = this.get_piece_xy_offset();
+  }
 
-  PuzzlePiece.prototype.draw_piece = function() {
+  PuzzlePiece.prototype.draw_piece = function(a, b) {
+    var xy;
     this.canvas = document.getElementById("puzzle-widget");
     this.context = this.canvas.getContext("2d");
     this.pc_img = document.getElementById("piece");
-    return this.context.drawImage(this.pc_img, 0, 100);
+    if (this.grid.in_range(a, b)) {
+      xy = this.grid.get_xy(a, b);
+      return this.context.drawImage(this.pc_img, xy[0] + this.dxy[0], xy[1] + this.dxy[1]);
+    } else {
+      return this.context.drawImage(this.pc_img, 0, 100);
+    }
+  };
+
+  PuzzlePiece.prototype.get_piece_xy_offset = function() {
+    var dx, dxy, dy;
+    dx = -14;
+    dy = 0;
+    dxy = [dx, dy];
+    return dxy;
   };
 
   return PuzzlePiece;
