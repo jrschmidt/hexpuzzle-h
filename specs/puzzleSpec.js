@@ -20,9 +20,25 @@ describe("Test of Photo Jigsaw Puzzle Widget", function() {
     });
   });
   describe("Puzzle Piece Tests", function() {
-    return it("should create a puzzle piece object", function() {
-      expect(this.puzzle.piece).toBeDefined;
-      return expect(this.puzzle.piece).toEqual(jasmine.any(PuzzlePiece));
+    beforeEach(function() {
+      return this.piece = this.puzzle.piece;
+    });
+    it("should create a puzzle piece object", function() {
+      expect(this.piece).toBeDefined;
+      return expect(this.piece).toEqual(jasmine.any(PuzzlePiece));
+    });
+    it("should provide puzzle piece drawing size in pixels", function() {
+      expect(this.piece.dim).toBeDefined;
+      expect(this.piece.dim).toEqual(jasmine.any(Array));
+      return expect(this.piece.dim).toEqual([63, 87]);
+    });
+    it("should create a redraw buffer before drawing puzzle piece", function() {
+      expect(this.piece.redraw).toBeDefined;
+      return expect(this.piece.redraw).toEqual(jasmine.any(HTMLCanvasElement));
+    });
+    return it("should set the dimensions of the redraw buffer to the puzzle piece drawing size", function() {
+      expect(this.piece.redraw.width).toEqual(63);
+      return expect(this.piece.redraw.height).toEqual(87);
     });
   });
   return describe("Puzzle Grid Model Tests", function() {

@@ -23,9 +23,25 @@ describe "Test of Photo Jigsaw Puzzle Widget", ->
 
   describe "Puzzle Piece Tests", ->
 
+    beforeEach ->
+      @piece = @puzzle.piece
+
     it "should create a puzzle piece object", ->
-      expect(@puzzle.piece).toBeDefined
-      expect(@puzzle.piece).toEqual(jasmine.any(PuzzlePiece))
+      expect(@piece).toBeDefined
+      expect(@piece).toEqual(jasmine.any(PuzzlePiece))
+
+    it "should provide puzzle piece drawing size in pixels", ->
+      expect(@piece.dim).toBeDefined
+      expect(@piece.dim).toEqual(jasmine.any(Array))
+      expect(@piece.dim).toEqual([63,87])
+
+    it "should create a redraw buffer before drawing puzzle piece", ->
+      expect(@piece.redraw).toBeDefined
+      expect(@piece.redraw).toEqual(jasmine.any(HTMLCanvasElement))
+
+    it "should set the dimensions of the redraw buffer to the puzzle piece drawing size", ->
+      expect(@piece.redraw.width).toEqual(63)
+      expect(@piece.redraw.height).toEqual(87)
 
 
   describe "Puzzle Grid Model Tests", ->

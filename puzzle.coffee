@@ -8,42 +8,6 @@ class PuzzleApp
     @piece.draw_piece(0,0)
     alert(":-)")
     @piece.draw_piece(2,1)
-    alert(":-)")
-    @piece.draw_piece(3,1)
-    alert(":-)")
-    @piece.draw_piece(2,3)
-    alert(":-)")
-    @piece.draw_piece(1,3)
-    alert(":-)")
-    @piece.draw_piece(4,3)
-    alert(":-)")
-    @piece.draw_piece(2,5)
-    alert(":-)")
-    @piece.draw_piece(2,6)
-    alert(":-)")
-    @piece.draw_piece(3,7)
-    alert(":-)")
-    @piece.draw_piece(5,4)
-    alert(":-)")
-    @piece.draw_piece(8,3)
-    alert(":-)")
-    @piece.draw_piece(8,1)
-    alert(":-)")
-    @piece.draw_piece(9,1)
-    alert(":-)")
-    @piece.draw_piece(10,1)
-    alert(":-)")
-    @piece.draw_piece(13,6)
-    alert(":-)")
-    @piece.draw_piece(18,4)
-    alert(":-)")
-    @piece.draw_piece(20,6)
-    alert(":-)")
-    @piece.draw_piece(21,2)
-    alert(":-)")
-    @piece.draw_piece(22,1)
-    alert(":-)")
-    @piece.draw_piece(22,4)
 
 
 
@@ -75,25 +39,75 @@ class PuzzleGridModel
 class PuzzlePiece
 
   constructor: (puzzle_app) ->
+
+    @dim = @get_dim()
+    @width = @dim[0]
+    @height = @dim[1]
+
+    @redraw = document.createElement('canvas')
+    @redraw.width = @width
+    @redraw.height = @height
+
     @puzzle = puzzle_app
     @grid = @puzzle.grid
-    @dxy = @get_piece_xy_offset()
 
-  draw_piece:  (a,b) ->
     @canvas = document.getElementById("puzzle-widget")
     @context = @canvas.getContext("2d")
+
+    # TODO When we code movement of the puzzle piece across the grid, we will
+    #      extract these lines to a 'reset(a,b)' method.
+    #         (which lines?)
+
+    dxy = @get_piece_xy_offset()
+    @dx = dxy[0]
+    @dy = dxy[1]
+
+    @redraw = document.createElement('canvas')
+    @redraw.width = @width
+    @redraw.height = @height
+
+  draw_piece:  (a,b) ->
     @pc_img = document.getElementById("piece")
     if @grid.in_range(a,b)
       xy = @grid.get_xy(a,b)
-      @context.drawImage(@pc_img,xy[0]+@dxy[0],xy[1]+@dxy[1])
+      xx = xy[0]+@dx
+      yy = xy[1]+@dy
+
+      # FIXME 'index out of range' error for jasmine, but okay for standalone
+      if @redraw.width > 0 && @redraw.height > 0
+        ctx = @redraw.getContext('2d')
+        ctx.drawImage(@canvas,xx,yy,@width,@height,0,0,@width,@height)
+      else
+        alert("redraw image not yet ready")
+
+      @context.drawImage(@redraw,300,100)
+
+      @context.drawImage(@pc_img,xx,yy)
     else
       @context.drawImage(@pc_img,0,100)
+
+  get_dim: () ->
+    dim = [63,87] # (temporarily hard code these values)
+    dim
 
   get_piece_xy_offset: () ->
     dx = -14 # (temporarily hard code these values)
     dy = 0
     dxy = [dx,dy]
     dxy
+
+
+
+class RedrawBuffer
+
+  constructor: () ->
+    @buffer = document.createElement('canvas')
+    @width = 1
+    @height = 1
+
+  reset_size: (x,y) ->
+    @width = x
+    @height = y
 
 
 
