@@ -5,7 +5,42 @@ class PuzzleApp
     @grid = new PuzzleGridModel
     @puzzle_view = new PuzzleView
     @piece = new PuzzlePiece(this)
+    alert(":-)")
     @piece.draw_piece(0,0)
+    alert(":-)")
+    @piece.draw_piece(2,1)
+    alert(":-)")
+    @piece.draw_piece(6,4)
+    alert(":-)")
+    @piece.draw_piece(11,2)
+    alert(":-)")
+    @piece.draw_piece(20,1)
+    alert(":-)")
+    @piece.draw_piece(22,5)
+    alert(":-)")
+    @piece.draw_piece(19,6)
+    alert(":-)")
+    @piece.draw_piece(12,1)
+    alert(":-)")
+    @piece.draw_piece(3,6)
+    alert(":-)")
+    @piece.draw_piece(3,5)
+    alert(":-)")
+    @piece.draw_piece(3,4)
+    alert(":-)")
+    @piece.draw_piece(3,3)
+    alert(":-)")
+    @piece.draw_piece(3,2)
+    alert(":-)")
+    @piece.draw_piece(3,1)
+    alert(":-)")
+    @piece.draw_piece(2,1)
+    alert(":-)")
+    @piece.draw_piece(10,4)
+    alert(":-)")
+    @piece.draw_piece(16,3)
+    alert(":-)")
+    @piece.draw_piece(8,5)
     alert(":-)")
     @piece.draw_piece(2,1)
 
@@ -40,6 +75,10 @@ class PuzzlePiece
 
   constructor: (puzzle_app) ->
 
+    # TODO When we code movement of the puzzle piece across the grid, we will
+    #      extract these lines to a 'reset(a,b)' method.
+    #         (which lines?)
+
     @dim = @get_dim()
     @width = @dim[0]
     @height = @dim[1]
@@ -48,24 +87,25 @@ class PuzzlePiece
     @redraw.width = @width
     @redraw.height = @height
 
+    @redraw_x = 0
+    @redraw_y = 0
+    @redraw_active = false
+
     @puzzle = puzzle_app
     @grid = @puzzle.grid
 
     @canvas = document.getElementById("puzzle-widget")
     @context = @canvas.getContext("2d")
 
-    # TODO When we code movement of the puzzle piece across the grid, we will
-    #      extract these lines to a 'reset(a,b)' method.
-    #         (which lines?)
-
     dxy = @get_piece_xy_offset()
     @dx = dxy[0]
     @dy = dxy[1]
 
-    @redraw = document.createElement('canvas')
-    @redraw.width = @width
-    @redraw.height = @height
 
+    # FIXME 'index out of range' error for ctx.drawImage with jasmine, but
+    #       okay for standalone. Possibly image loading issues.
+    # TODO  After we get this working correctly, change name to set_piece and
+    #       make seperate methods for draw_piece, set_redraw, redraw, etc.
   draw_piece:  (a,b) ->
     @pc_img = document.getElementById("piece")
     if @grid.in_range(a,b)
@@ -73,14 +113,12 @@ class PuzzlePiece
       xx = xy[0]+@dx
       yy = xy[1]+@dy
 
-      # FIXME 'index out of range' error for jasmine, but okay for standalone
-      if @redraw.width > 0 && @redraw.height > 0
-        ctx = @redraw.getContext('2d')
-        ctx.drawImage(@canvas,xx,yy,@width,@height,0,0,@width,@height)
-      else
-        alert("redraw image not yet ready")
-
-      @context.drawImage(@redraw,300,100)
+      @context.drawImage(@redraw,@redraw_x,@redraw_y) if @redraw_active
+      ctx = @redraw.getContext('2d')
+      ctx.drawImage(@canvas,xx,yy,@width,@height,0,0,@width,@height)
+      @redraw_active = true
+      @redraw_x = xx
+      @redraw_y =yy
 
       @context.drawImage(@pc_img,xx,yy)
     else

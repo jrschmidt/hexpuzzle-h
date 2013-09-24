@@ -6,7 +6,42 @@ PuzzleApp = (function() {
     this.grid = new PuzzleGridModel;
     this.puzzle_view = new PuzzleView;
     this.piece = new PuzzlePiece(this);
+    alert(":-)");
     this.piece.draw_piece(0, 0);
+    alert(":-)");
+    this.piece.draw_piece(2, 1);
+    alert(":-)");
+    this.piece.draw_piece(6, 4);
+    alert(":-)");
+    this.piece.draw_piece(11, 2);
+    alert(":-)");
+    this.piece.draw_piece(20, 1);
+    alert(":-)");
+    this.piece.draw_piece(22, 5);
+    alert(":-)");
+    this.piece.draw_piece(19, 6);
+    alert(":-)");
+    this.piece.draw_piece(12, 1);
+    alert(":-)");
+    this.piece.draw_piece(3, 6);
+    alert(":-)");
+    this.piece.draw_piece(3, 5);
+    alert(":-)");
+    this.piece.draw_piece(3, 4);
+    alert(":-)");
+    this.piece.draw_piece(3, 3);
+    alert(":-)");
+    this.piece.draw_piece(3, 2);
+    alert(":-)");
+    this.piece.draw_piece(3, 1);
+    alert(":-)");
+    this.piece.draw_piece(2, 1);
+    alert(":-)");
+    this.piece.draw_piece(10, 4);
+    alert(":-)");
+    this.piece.draw_piece(16, 3);
+    alert(":-)");
+    this.piece.draw_piece(8, 5);
     alert(":-)");
     this.piece.draw_piece(2, 1);
   }
@@ -66,6 +101,9 @@ PuzzlePiece = (function() {
     this.redraw = document.createElement('canvas');
     this.redraw.width = this.width;
     this.redraw.height = this.height;
+    this.redraw_x = 0;
+    this.redraw_y = 0;
+    this.redraw_active = false;
     this.puzzle = puzzle_app;
     this.grid = this.puzzle.grid;
     this.canvas = document.getElementById("puzzle-widget");
@@ -73,9 +111,6 @@ PuzzlePiece = (function() {
     dxy = this.get_piece_xy_offset();
     this.dx = dxy[0];
     this.dy = dxy[1];
-    this.redraw = document.createElement('canvas');
-    this.redraw.width = this.width;
-    this.redraw.height = this.height;
   }
 
   PuzzlePiece.prototype.draw_piece = function(a, b) {
@@ -85,13 +120,14 @@ PuzzlePiece = (function() {
       xy = this.grid.get_xy(a, b);
       xx = xy[0] + this.dx;
       yy = xy[1] + this.dy;
-      if (this.redraw.width > 0 && this.redraw.height > 0) {
-        ctx = this.redraw.getContext('2d');
-        ctx.drawImage(this.canvas, xx, yy, this.width, this.height, 0, 0, this.width, this.height);
-      } else {
-        alert("redraw image not yet ready");
+      if (this.redraw_active) {
+        this.context.drawImage(this.redraw, this.redraw_x, this.redraw_y);
       }
-      this.context.drawImage(this.redraw, 300, 100);
+      ctx = this.redraw.getContext('2d');
+      ctx.drawImage(this.canvas, xx, yy, this.width, this.height, 0, 0, this.width, this.height);
+      this.redraw_active = true;
+      this.redraw_x = xx;
+      this.redraw_y = yy;
       return this.context.drawImage(this.pc_img, xx, yy);
     } else {
       return this.context.drawImage(this.pc_img, 0, 100);
