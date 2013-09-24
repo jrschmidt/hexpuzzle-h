@@ -111,10 +111,43 @@ class RedrawBuffer
 
 
 
+class HexBuilder
+
+###############
+  constructor: () ->
+
+    @canvas = document.getElementById("canvas")
+    @context = @canvas.getContext("2d")
+
+    @colors = []
+
+    @img = document.getElementById("terrain")
+    @context.drawImage(@img,0,0)
+############
+
+  fillhex: (a,b,color) ->
+    x = 35+a*18
+    y = 29+b*24
+    y = y+12 if (a%2 == 0)
+    @context.fillStyle = color
+    @context.beginPath()
+    @context.moveTo(x,y)
+    @context.lineTo(x+11,y)
+    @context.lineTo(x+18,y+12)
+    @context.lineTo(x+12,y+25)
+    @context.lineTo(x-1,y+25)
+    @context.lineTo(x-6,y+12)
+    @context.lineTo(x,y)
+    @context.fill()
+    @context.closePath()
+
+
+
 class PuzzleView
 
   constructor: () ->
 
+    alert("PuzzleView constructor")
     @canvas = document.getElementById("puzzle-widget")
     @context = @canvas.getContext("2d")
 

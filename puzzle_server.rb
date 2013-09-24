@@ -13,7 +13,7 @@ get '/' do
 end
 
 
-get 'puzzle.js' do
+get '/javascripts/puzzle.js' do
   coffee :puzzle
 end
 
