@@ -5,6 +5,7 @@ class PuzzleApp
     @grid = new PuzzleGridModel
     @puzzle_view = new PuzzleView
     @hx = new HexBuilder
+    @hx_data = new HexTestData(@hx)
 
     @piece = new PuzzlePiece(this)
 
@@ -120,18 +121,11 @@ class HexBuilder
     @context = @canvas.getContext("2d")
     @colors = ["#cc5050","#5050cc","#50cccc","#50cc50","#cccc50","#cc50cc"]
 
-    @fillhex(1,1,1)
-    @fillhex(1,2,0)
-    @fillhex(2,1,3)
-    @fillhex(2,2,4)
-    @fillhex(3,1,5)
-    @fillhex(3,2,0)
-
 
   fillhex: (a,b,c_no) ->
-    x = 106+a*14
-    y = 35+b*20
-    y = y+9 if (a%2 == 0)
+    x = 113+a*14
+    y = 27+b*20
+    y = y-9 if (a%2 == 0)
     @context.fillStyle = @colors[c_no]
     @context.beginPath()
     @context.moveTo(x,y)
@@ -146,6 +140,30 @@ class HexBuilder
 
 
 
+class HexTestData
+
+  constructor: (hx_builder) ->
+
+    @hex = hx_builder
+    @canvas = document.getElementById("puzzle-widget")
+    dstring = @canvas.getAttribute("data-puzzle-pattern")
+    n = 0
+    for row in [1..10]
+      for col in [1..24]
+          ch = dstring[n]
+          n = n+1
+          console.log(col+","+row+"  ch["+n+"] = "+ch)
+          switch ch
+            when "b","f","n" then hue = 0
+            when "a","e","m" then hue = 1
+            when "g","i" then hue = 2
+            when "c","k","o" then hue = 3
+            when "d","l","p" then hue = 4
+            when "h","j" then hue = 5
+          @hex.fillhex(col,row,hue) unless (row==10 && col%2==1)
+
+
+
 class PuzzleView
 
   constructor: () ->
@@ -153,8 +171,8 @@ class PuzzleView
     @canvas = document.getElementById("puzzle-widget")
     @context = @canvas.getContext("2d")
 
-#    @img = document.getElementById("frame")
-#    @context.drawImage(@img,100,30)
+    @img = document.getElementById("frame")
+    @context.drawImage(@img,100,30)
 
 
 #   #   #   #   #   #
