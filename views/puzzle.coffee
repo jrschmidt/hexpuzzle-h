@@ -4,6 +4,8 @@ class PuzzleApp
 
     @grid = new PuzzleGridModel
     @puzzle_view = new PuzzleView
+    @hx = new HexBuilder
+
     @piece = new PuzzlePiece(this)
 
 
@@ -113,30 +115,31 @@ class RedrawBuffer
 
 class HexBuilder
 
-###############
   constructor: () ->
-
-    @canvas = document.getElementById("canvas")
+    @canvas = document.getElementById("puzzle-widget")
     @context = @canvas.getContext("2d")
+    @colors = ["#cc5050","#5050cc","#50cccc","#50cc50","#cccc50","#cc50cc"]
 
-    @colors = []
+    @fillhex(1,1,1)
+    @fillhex(1,2,0)
+    @fillhex(2,1,3)
+    @fillhex(2,2,4)
+    @fillhex(3,1,5)
+    @fillhex(3,2,0)
 
-    @img = document.getElementById("terrain")
-    @context.drawImage(@img,0,0)
-############
 
-  fillhex: (a,b,color) ->
-    x = 35+a*18
-    y = 29+b*24
-    y = y+12 if (a%2 == 0)
-    @context.fillStyle = color
+  fillhex: (a,b,c_no) ->
+    x = 106+a*14
+    y = 35+b*20
+    y = y+9 if (a%2 == 0)
+    @context.fillStyle = @colors[c_no]
     @context.beginPath()
     @context.moveTo(x,y)
-    @context.lineTo(x+11,y)
-    @context.lineTo(x+18,y+12)
-    @context.lineTo(x+12,y+25)
-    @context.lineTo(x-1,y+25)
-    @context.lineTo(x-6,y+12)
+    @context.lineTo(x+9,y)
+    @context.lineTo(x+14,y+9)
+    @context.lineTo(x+9,y+19)
+    @context.lineTo(x,y+19)
+    @context.lineTo(x-5,y+9)
     @context.lineTo(x,y)
     @context.fill()
     @context.closePath()
@@ -147,12 +150,11 @@ class PuzzleView
 
   constructor: () ->
 
-    alert("PuzzleView constructor")
     @canvas = document.getElementById("puzzle-widget")
     @context = @canvas.getContext("2d")
 
-    @img = document.getElementById("frame")
-    @context.drawImage(@img,100,30)
+#    @img = document.getElementById("frame")
+#    @context.drawImage(@img,100,30)
 
 
 #   #   #   #   #   #
