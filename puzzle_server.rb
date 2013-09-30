@@ -93,7 +93,12 @@ class PuzzlePattern
 
 
   def fill_center_lane
-
+    center = @piece_sizes[6..9]
+    center_lane = []
+    24.times {|cc| center_lane[cc] = []}
+    @grid.each_index {|rr| @grid[rr].each_index {|cc| center_lane[cc] << rr if @grid[rr][cc] == :x} }
+    6.upto(9) {|n| build_center_piece(n,SYM[n],center[n-6]) }
+    center_lane.each_index { |cc| center_lane[cc].each {|rr| @grid[rr][cc] = :g} } # temp - for marking the center lane hexes
   end
 
 
