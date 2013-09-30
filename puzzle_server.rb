@@ -7,6 +7,8 @@ require 'coffee-script'
 
 require 'pry'
 
+set :server, %w[webrick thin mongrel]
+
 
 get '/' do
   erb :index
@@ -24,9 +26,7 @@ class PuzzlePattern
   TOP_BOTTOM_PIECES = 6
   MID_ROW_PIECES = 4
   VERT_LANE_WIDTH = 4
-  TOP = [:a,:b,:c,:d,:e,:f]
-  BOTTOM = [:k,:l,:m,:n,:o,:p]
-  CENTER = [:g,:h,:i,:j]
+  SYM = [:a,:b,:c,:d,:e,:f,:g,:h,:i,:j,:k,:l,:m,:n,:o,:p]
   SIZES_START = [13,13,13,13,13,13,15,15,15,15,13,13,13,13,13,13]
   SEVENTEENS = [ [6,7], [6,8], [6,9], [7,8], [7,9], [8,9] ]
   TOP_BOTTOM = [0,1,2,3,4,5,10,11,12,13,14,15]
@@ -39,29 +39,12 @@ class PuzzlePattern
   def initialize
     @grid = []
     @piece_sizes = shuffle_piece_sizes
-
-    # TODO When we 'switch on" the live hex fill function, we will need to
-    #      initialize each hex to :empty.
-    test = []
-    test << "aaaaabbbccccdddddeeeffff"
-    test << "aaabbbbbccccdddeeeeeffff"
-    test << "aaaabbbbccccddddeeeeffff"
-    test << "aaaggbghhhhcdiddiiiejjjf"
-    test << "ggggggghhhhhiiiiiiijjjjj"
-    test << "gggglglghhhhiiiioiojjjjj"
-    test << "kgkklllhmhmmninnooojpppj"
-    test << "kkkklllllmmmmnnnoooopppp"
-    test << "kkklklllmmmmnnnnooopoppp"
-    test << "xkxkxlxmxmxnxnxnxoxoxpxp"
     0.upto(9) do
       row = []
       24.times {|cc| row << :x}
       @grid << row
-#      str = test[rr]
-#      row = []
-#      0.upto(str.size-1) {|cc| row << str[cc].to_sym}
-#      @grid << row
     end
+    0.step(22,2) {|cx| @grid[9][cx] = :z} 
 
     fill_top_row
     fill_bottom_row
@@ -72,7 +55,7 @@ class PuzzlePattern
 
   def fill_top_row
     top = @piece_sizes[0..5]
-    0.upto(5) {|n| build_top_piece(n,TOP[n],top[n]) }
+    0.upto(5) {|n| build_top_piece(n,SYM[n],top[n]) }
   end
 
 
@@ -90,12 +73,34 @@ class PuzzlePattern
 
 
   def fill_bottom_row
+    bottom = @piece_sizes[10..15]
+    10.upto(15) {|n| build_bottom_piece(n,SYM[n],bottom[n-10]) }
+  end
 
+
+  def build_bottom_piece(n,sym,size)
+    [1,3].each {|aa| set_hex(4*(n-10)+aa,9,sym)}
+    [0,1,2,3].each {|aa| [8,7,6].each {|bb| set_hex(4*(n-10)+aa,bb,sym)} }
+    if size == 13
+      j = rand(2)
+      set_hex(4*(n-10)+1+2*j,6,:x)
+    end
+    if size == 15
+      k = rand(2)
+      set_hex(4*(n-10)+2*k,5,sym)
+    end
   end
 
 
   def fill_center_lane
 
+  end
+
+
+  def build_center_piece(n,sym,size)
+#    puts n
+#    puts sym
+#    puts size
   end
 
 
