@@ -169,6 +169,12 @@ class PuzzleView
 
   constructor: () ->
 
+    @backgrounds = ["#cc5050","#80cc50","#50b4cc",
+                    "#b450cc","#cc8050","#50cc50",
+                    "#5080cc","#cc50b4","#ccb450",
+                    "#50cc80","#5050cc","#cc5080",
+                    "#b4cc50","#50ccb4","#8050cc"]
+
     @canvas = document.getElementById("puzzle-widget")
     @context = @canvas.getContext("2d")
 
