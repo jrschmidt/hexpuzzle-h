@@ -119,7 +119,7 @@ class HexBuilder
   constructor: () ->
     @canvas = document.getElementById("puzzle-widget")
     @context = @canvas.getContext("2d")
-    @colors = ["#cc5050","#5050cc","#50cccc","#50cc50","#cccc50","#cc50cc"]
+    @colors = ["#cc5050","#5050cc","#50cccc","#50cc50","#cccc50","#cc50cc","#000000"]
 
 
   fillhex: (a,b,c_no) ->
@@ -160,6 +160,7 @@ class HexTestData
             when "c","k","o" then hue = 3
             when "d","l","p" then hue = 4
             when "h","j" then hue = 5
+            when "x" then hue = 6
           @hex.fillhex(col,row,hue) unless (row==10 && col%2==1)
 
 
