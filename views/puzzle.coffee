@@ -5,7 +5,7 @@ class PuzzleApp
     @grid = new PuzzleGridModel
     @puzzle_view = new PuzzleView
     @hx = new HexBuilder
-    @hx_data = new HexTestData(@hx)
+    @hx_data = new PuzzlePattern(@hx)
 
     @piece = new PuzzlePiece(this)
 
@@ -140,28 +140,52 @@ class HexBuilder
 
 
 
-class HexTestData
+class PuzzlePattern
 
   constructor: (hx_builder) ->
 
     @hex = hx_builder
     @canvas = document.getElementById("puzzle-widget")
-    dstring = @canvas.getAttribute("data-puzzle-pattern")
+    @dstring = @canvas.getAttribute("data-puzzle-pattern")
+    @grid = @get_pattern_grid(@dstring)
+
+    @draw_pattern()
+
     n = 0
     for row in [1..10]
       for col in [1..24]
-          ch = dstring[n]
+          ch = @dstring[n]
           n = n+1
-          console.log(col+","+row+"  ch["+n+"] = "+ch)
-          switch ch
-            when "b","f","n" then hue = 0
-            when "a","e","m" then hue = 1
-            when "g","i" then hue = 2
-            when "c","k","o" then hue = 3
-            when "d","l","p" then hue = 4
-            when "h","j" then hue = 5
-            when "x" then hue = 6
-          @hex.fillhex(col,row,hue) unless (row==10 && col%2==1)
+
+
+  get_pattern_grid: (data_string) ->
+    grid = []
+    n = 0
+    for row in [1..10]
+      grid[row] = []
+      for col in [1..24]
+        ch = @dstring[n]
+        grid[row][col] = ch
+        n = n+1
+    console.log(rrow) for rrow in grid
+    grid
+
+
+  draw_pattern: () ->
+    n = 0
+    for row in [1..10]
+      for col in [1..24]
+        ch = @dstring[n]
+        n = n+1
+        switch ch
+          when "b","f","n" then hue = 0
+          when "a","e","m" then hue = 1
+          when "g","i" then hue = 2
+          when "c","k","o" then hue = 3
+          when "d","l","p" then hue = 4
+          when "h","j" then hue = 5
+          when "x" then hue = 6
+        @hex.fillhex(col,row,hue) unless (row==10 && col%2==1)
 
 
 
