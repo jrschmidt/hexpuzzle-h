@@ -37,10 +37,9 @@ class PuzzlePattern
 
   def build_piece_patterns
     init_all_rows
-
     complete_top_row
     complete_bottom_row
-
+    mutate_vert_lanes
   end
 
 
@@ -91,7 +90,6 @@ class PuzzlePattern
   end
 
 
-  # FIXME FIX THIS METHOD
   def augment_bottom_piece(pc,sym,size)
     if size == 13
       i = 1+rand(2)*2
@@ -102,6 +100,26 @@ class PuzzlePattern
       i = rand(2)*2
       set_hex(4*(pc-10)+i,5,sym)
     end
+  end
+
+
+  def mutate_vert_lanes
+    boundaries = [0,1,2,3,4,10,11,12,13,14].shuffle[0..5]
+    boundaries.each {|pc_1| mutate_lanes(pc_1)}
+  end
+
+
+  def mutate_lanes(pc_1)
+    pc_2 = pc_1+1
+    rows = pc_1 < 10 ? [0,1,2] : [7,8,9]
+    rows.shuffle!
+    row_1 = rows[2]
+    z = rand(2)
+    row_2 = rows[z]
+    row_2 = row_2-1 if pc_1 >= 10
+    col = pc_1 < 10 ? 4*pc_1+3 : 4*(pc_1-10)+3
+    set_hex(col,row_1,SYM[pc_2])
+    set_hex(col+1,row_2,SYM[pc_1])
   end
 
 
