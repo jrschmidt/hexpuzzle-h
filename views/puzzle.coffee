@@ -145,17 +145,29 @@ class PuzzlePattern
   constructor: (hx_builder) ->
 
     @hex = hx_builder
+
     @canvas = document.getElementById("puzzle-widget")
     @dstring = @canvas.getAttribute("data-puzzle-pattern")
+
     @grid = @get_pattern_grid(@dstring)
+    @missing = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
 
-    @draw_pattern()
+    # ------[(temp) test data generator]------
+    take = Math.floor(24*Math.random())
+    for i in [1..take]
+      next = Math.floor(24*Math.random())
+      delete @missing[next]
+    # ------[(temp) test data generator]------
 
-    n = 0
-    for row in [1..10]
-      for col in [1..24]
-          ch = @dstring[n]
-          n = n+1
+    @draw_mask()
+
+#    @draw_pattern()
+
+
+  draw_mask: () ->
+    for bb in [1..10]
+      for aa in [1..24]
+        @hex.fillhex(aa,bb,0) if @grid[bb][aa] in @missing
 
 
   get_pattern_grid: (data_string) ->
@@ -198,11 +210,12 @@ class PuzzleView
                     "#5080cc","#cc50b4","#ccb450",
                     "#50cc80","#5050cc","#cc5080",
                     "#b4cc50","#50ccb4","#8050cc"]
+    @mask_color = @backgrounds[0] # FIXME (temporarily using same color without rotating)
 
     @canvas = document.getElementById("puzzle-widget")
     @context = @canvas.getContext("2d")
 
-    @img = document.getElementById("frame")
+    @img = document.getElementById("photo")
     @context.drawImage(@img,100,30)
 
 
