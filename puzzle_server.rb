@@ -37,82 +37,81 @@ class PuzzlePattern
   attr :pattern_string
 
   def initialize
-    @grid = []
     @piece_sizes = shuffle_piece_sizes
+    @grid = get_init_grid
+    build_piece_patterns
+  end
+
+
+  def build_piece_patterns
+    init_all_rows
+
+#    fill_top_row
+#    fill_bottom_row
+#    fill_center_lane
+  end
+
+
+  def init_all_rows
+    [0,1,2].each {|rr| [0,1,2,3,4,5].each {|pc| [0,1,2,3].each {|i| set_hex(4*pc+i,rr,SYM[pc]) } } }
+    [3,4,5].each {|rr| [6,7,8,9].each {|pc| [0,1,2,3,4,5].each {|i| set_hex(6*(pc-6)+i,rr,SYM[pc]) } } }
+    [6,7,8,9].each {|pc| [1,3,5].each {|i| set_hex(6*(pc-6)+i,6,SYM[pc]) } }
+    [6,7,8].each {|pc| set_hex(6*(pc-6)+6,4,SYM[pc]) }
+    [10,11,12,13,14,15].each {|pc| [0,2].each {|i| set_hex(4*(pc-10)+i,6,SYM[pc]) } }
+    [7,8].each {|rr| [10,11,12,13,14,15].each {|pc| [0,1,2,3].each {|i| set_hex(4*(pc-10)+i,rr,SYM[pc]) } } }
+    [10,11,12,13,14,15].each {|pc| [1,3].each {|i| set_hex(4*(pc-10)+i,9,SYM[pc]) } }
+  end
+
+
+  def get_init_grid
+    grid = []
     0.upto(9) do
       row = []
       24.times {|cc| row << :x}
-      @grid << row
+      grid << row
     end
-    0.step(22,2) {|cx| @grid[9][cx] = :z} 
-
-    fill_top_row
-    fill_bottom_row
-    fill_center_lane
-
+    0.step(22,2) {|cx| grid[9][cx] = :z}
+    grid
   end
 
 
-  def fill_top_row
-    top = @piece_sizes[0..5]
-    0.upto(5) {|n| build_top_piece(n,SYM[n],top[n]) }
-  end
+#  def fill_top_row
+#    top = @piece_sizes[0..5]
+#    0.upto(5) {|n| build_top_piece(n,SYM[n],top[n]) }
+#  end
 
 
-  def build_top_piece(n,sym,size)
-    [0,1,2,3].each {|aa| [0,1,2].each {|bb| set_hex(4*n+aa,bb,sym)} }
-    if size == 13
-      j = rand(2)
-      set_hex(4*n+1+2*j,3,sym)
-    end
-    if size == 15
-      k = rand(4)
-      4.times {|i| set_hex(4*n+i,3,sym) unless i == k}
-    end
-  end
+#  def build_top_piece(n,sym,size)
+#    [0,1,2,3].each {|aa| [0,1,2].each {|bb| set_hex(4*n+aa,bb,sym)} }
+#    if size == 13
+#      j = rand(2)
+#      set_hex(4*n+1+2*j,3,sym)
+#    end
+#    if size == 15
+#      k = rand(4)
+#      4.times {|i| set_hex(4*n+i,3,sym) unless i == k}
+#    end
+#  end
 
 
-  def fill_bottom_row
-    bottom = @piece_sizes[10..15]
-    10.upto(15) {|n| build_bottom_piece(n,SYM[n],bottom[n-10]) }
-  end
+#  def fill_bottom_row
+#    bottom = @piece_sizes[10..15]
+#    10.upto(15) {|n| build_bottom_piece(n,SYM[n],bottom[n-10]) }
+#  end
 
 
-  def build_bottom_piece(n,sym,size)
-    [1,3].each {|aa| set_hex(4*(n-10)+aa,9,sym)}
-    [0,1,2,3].each {|aa| [8,7,6].each {|bb| set_hex(4*(n-10)+aa,bb,sym)} }
-    if size == 13
-      j = rand(2)
-      set_hex(4*(n-10)+1+2*j,6,:x)
-    end
-    if size == 15
-      k = rand(2)
-      set_hex(4*(n-10)+2*k,5,sym)
-    end
-  end
-
-
-  def fill_center_lane
-    center = @piece_sizes[6..9]
-    center_lane = find_center_lane
-    center_lane.each_index { |cc| center_lane[cc].each {|rr| @grid[rr][cc] = :g} } # temp - for marking the center lane hexes
-    6.upto(9) {|n| build_center_piece(n,SYM[n],center[n-6]) }
-  end
-
-
-  def find_center_lane
-    center_lane = []
-    24.times {|cc| center_lane[cc] = []}
-    @grid.each_index {|rr| @grid[rr].each_index {|cc| center_lane[cc] << rr if @grid[rr][cc] == :x} }
-    center_lane
-  end
-
-
-  def build_center_piece(n,sym,size)
-#    puts n
-#    puts sym
-#    puts size
-  end
+#  def build_bottom_piece(n,sym,size)
+#    [1,3].each {|aa| set_hex(4*(n-10)+aa,9,sym)}
+#    [0,1,2,3].each {|aa| [8,7,6].each {|bb| set_hex(4*(n-10)+aa,bb,sym)} }
+#    if size == 13
+#      j = rand(2)
+#      set_hex(4*(n-10)+1+2*j,6,:x)
+#    end
+#    if size == 15
+#      k = rand(2)
+#      set_hex(4*(n-10)+2*k,5,sym)
+#    end
+#  end
 
 
   def shuffle_piece_sizes
@@ -128,6 +127,9 @@ class PuzzlePattern
         fifteens = fifteens+1      
       end
     end    
+
+    # TODO With the new algorithm ('center first'), we no longer need to pick
+    # random values for the center lane pieces.
 
     # Center lane
     r6 = rand(6)
