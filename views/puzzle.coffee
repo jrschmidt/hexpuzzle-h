@@ -1,14 +1,14 @@
 class PuzzleApp
 
   constructor: () ->
-
-    @grid = new PuzzleGridModel
+    @grid_model = new PuzzleGridModel
     @puzzle_view = new PuzzleView
-    @hx = new HexBuilder
-    @hx_data = new PuzzlePattern(@hx)
+    @hex = new HexBuilder
+    @pattern = new PuzzlePattern(this)
+    @mask = new MissingPiecesMask(this,@pattern)
+    @mask.draw_mask()
 
-    @piece = new PuzzlePiece(this)
-
+    @piece = new PuzzlePiece(this,@pattern)
 
 
 class PuzzleGridModel
@@ -37,44 +37,45 @@ class PuzzleGridModel
 
 
 class PuzzlePiece
-
-  constructor: (puzzle_app) ->
-
-    # TODO When we code movement of the puzzle piece across the grid, we will
-    #      extract these lines to a 'reset(a,b)' method.
-    #         (which lines?)
-
-    @dim = @get_dim()
-    @width = @dim[0]
-    @height = @dim[1]
-
-    @redraw = document.createElement('canvas')
-    @redraw.width = @width
-    @redraw.height = @height
-
-    @redraw_x = 0
-    @redraw_y = 0
-    @redraw_active = false
+  constructor: (puzzle_app,puzzle_pattern) ->
 
     @puzzle = puzzle_app
-    @grid = @puzzle.grid
+    @pattern = puzzle_pattern
+    @grid = @pattern.grid
+    @hexes = []
+
+    @grid_model = @puzzle.grid_model
 
     @canvas = document.getElementById("puzzle-widget")
     @context = @canvas.getContext("2d")
+    @redraw = new RedrawBuffer
 
-    dxy = @get_piece_xy_offset()
-    @dx = dxy[0]
-    @dy = dxy[1]
+    @construct_piece("a")
+
+  construct_piece: (sym) ->
+    @sym = sym
+    @hexes = []
+    for bb in [1..10]
+      for aa in [1..24]
+        @hexes.push([aa,bb]) if @grid[bb][aa] == @sym
+    console.log("PIECE ID: "+sym)
+    console.log("    "+hx[0]+","+hx[1]) for hx in @hexes
 
 
-    # FIXME 'index out of range' error for ctx.drawImage with jasmine, but
-    #       okay for standalone. Possibly image loading issues.
-    # TODO  After we get this working correctly, change name to set_piece and
-    #       make seperate methods for draw_piece, set_redraw, redraw, etc.
+#    @dim = @get_dim()
+#    @width = @dim[0]
+#    @height = @dim[1]
+#    @redraw.reset_size(@width,@height)
+
+#    dxy = @get_piece_xy_offset()
+#    @dx = dxy[0]
+#    @dy = dxy[1]
+
+
   draw_piece:  (a,b) ->
     @pc_img = document.getElementById("piece")
-    if @grid.in_range(a,b)
-      xy = @grid.get_xy(a,b)
+    if @grid_model.in_range(a,b)
+      xy = @grid_model.get_xy(a,b)
       xx = xy[0]+@dx
       yy = xy[1]+@dy
 
@@ -104,9 +105,14 @@ class PuzzlePiece
 class RedrawBuffer
 
   constructor: () ->
-    @buffer = document.createElement('canvas')
-    @width = 1
-    @height = 1
+    @redraw = document.createElement('canvas')
+
+    @redraw.width = @width
+    @redraw.height = @height
+
+    @redraw_x = 0
+    @redraw_y = 0
+    @redraw_active = false
 
   reset_size: (x,y) ->
     @width = x
@@ -142,32 +148,15 @@ class HexBuilder
 
 class PuzzlePattern
 
-  constructor: (hx_builder) ->
+  constructor: (puzzle_app) ->
 
-    @hex = hx_builder
+    @puzzle = puzzle_app
+    @hex = @puzzle.hex # [(temp) use this object to draw pattern on canvas]
 
     @canvas = document.getElementById("puzzle-widget")
     @dstring = @canvas.getAttribute("data-puzzle-pattern")
 
     @grid = @get_pattern_grid(@dstring)
-    @missing = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
-
-    # ------[(temp) test data generator]------
-    take = Math.floor(24*Math.random())
-    for i in [1..take]
-      next = Math.floor(24*Math.random())
-      delete @missing[next]
-    # ------[(temp) test data generator]------
-
-    @draw_mask()
-
-#    @draw_pattern()
-
-
-  draw_mask: () ->
-    for bb in [1..10]
-      for aa in [1..24]
-        @hex.fillhex(aa,bb,0) if @grid[bb][aa] in @missing
 
 
   get_pattern_grid: (data_string) ->
@@ -183,7 +172,7 @@ class PuzzlePattern
     grid
 
 
-  draw_pattern: () ->
+  draw_pattern: () -> # [(temp) - test/diagnostic method]
     n = 0
     for row in [1..10]
       for col in [1..24]
@@ -198,6 +187,34 @@ class PuzzlePattern
           when "h","j" then hue = 5
           when "x" then hue = 6
         @hex.fillhex(col,row,hue) unless (row==10 && col%2==1)
+
+
+
+class MissingPiecesMask
+
+  constructor: (puzzle_app,puzzle_pattern) ->
+
+    @puzzle = puzzle_app
+    @pattern = puzzle_pattern
+    @grid = @pattern.grid
+    @hex = @puzzle.hex
+    @missing = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
+
+    # ------[(temp) test data generator]------
+    take = Math.floor(24*Math.random())
+    for i in [1..take]
+      next = Math.floor(24*Math.random())
+      delete @missing[next]
+    # ------[(temp) test data generator]------
+
+    @draw_mask()
+
+
+  draw_mask: () ->
+    for bb in [1..10]
+      for aa in [1..24]
+        @hex.fillhex(aa,bb,0) if @grid[bb][aa] in @missing
+
 
 
 
