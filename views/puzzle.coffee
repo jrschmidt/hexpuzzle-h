@@ -54,12 +54,18 @@ class PuzzlePiece
 
   construct_piece: (sym) ->
     @sym = sym
-    @hexes = []
+    @hexes = @get_hexes()
+    @box = new PieceRenderBox(this)
+
+
+  get_hexes: () ->
+    hexes = []
     for bb in [1..10]
       for aa in [1..24]
-        @hexes.push([aa,bb]) if @grid[bb][aa] == @sym
-    console.log("PIECE ID: "+sym)
-    console.log("    "+hx[0]+","+hx[1]) for hx in @hexes
+        hexes.push([aa,bb]) if @grid[bb][aa] == @sym
+    console.log("PIECE ID: "+@sym)
+    console.log("    "+hx[0]+","+hx[1]) for hx in hexes
+    hexes
 
 
 #    @dim = @get_dim()
@@ -99,6 +105,36 @@ class PuzzlePiece
     dy = 0
     dxy = [dx,dy]
     dxy
+
+
+
+class PieceRenderBox
+
+  constructor: (piece) ->
+
+    @piece = piece
+    @hexes = @piece.hexes
+    left = 30
+    right = 0
+    top = 100
+    bottom = 0
+    for hx in @hexes
+      a = hx[0]
+      bb = hx[1]
+      b = 5 + 10*(bb-1) + 5*(a%2)
+      left = a if a < left
+      right = a if a > right
+      top = b if b < top
+      bottom = b if b > bottom
+    cols = right - left + 1
+    halves = (bottom - top)/5 + 2
+    @width = 6 + cols*14
+    @height = halves*10
+    console.log("PieceRenderBox:")
+    console.log("    cols = "+cols)
+    console.log("    halves = "+halves)
+    console.log("    WIDTH = "+@width)
+    console.log("    HEIGHT = "+@height)
 
 
 
