@@ -143,7 +143,14 @@ class PiecePattern
     @img = document.createElement('canvas')
     @img.width = @piece.box.width
     @img.height = @piece.box.height
-    # TODO SEE HexDraw note
+    @draw_pattern()
+
+
+  draw_pattern: () ->
+    for hx in @hexes
+      aa = hx[0]
+      bb = hx[1]
+      @hex_draw.fillhex_ab_xy(aa,bb,10,100,3)
 
 
 
@@ -300,6 +307,13 @@ class HexDraw
     y = 27+b*20
     y = y-9 if (a%2 == 0)
     @fillhex_xy(x,y,c_no)
+
+
+  fillhex_ab_xy: (a,b,x,y,c_no) ->  # {temp method ???}
+    xx = x+(a-1)*14
+    yy = y+(b-1)*20
+    yy = yy-9 if (a%2 == 0)
+    @fillhex_xy(xx,yy,c_no)
 
 
   # TODO Change this to draw on any image (like PieceMask)
