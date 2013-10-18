@@ -1,14 +1,16 @@
 class PuzzleApp
 
   constructor: () ->
+    @puzzle_view = new PuzzleView(this)
     @grid_model = new PuzzleGridModel
-    @puzzle_view = new PuzzleView
-    @hex_draw = new HexDraw
+    @hex_draw = new HexDraw(this)
     @pattern = new PuzzlePattern(this)
-    @mask = new MissingPiecesMask(this,@pattern)
-    @mask.draw_mask()
+    @mask = new MissingPiecesMask(this)
+    @piece = new PuzzlePiece(this)
 
-    @piece = new PuzzlePiece(this,@pattern)
+
+#    alert(" T W E L V E !!!")
+#    @puzzle_view.temp_draw_piece_mask(0,0)
 
 
 
@@ -39,7 +41,9 @@ class PuzzlePattern
 
 
   draw_pattern: () -> # [(temp) - test/diagnostic method]
-    # FIXME the fill_hex methods are being refactored to take a context/image/canvas parameter telling it WHAT to draw on.
+    # FIXME the fill_hex methods are being refactored to take a
+    #  context/image/canvas parameter telling it WHAT to draw on.
+    #  If we use this method again we will have to adjust it accordingly.
     n = 0
     for row in [1..10]
       for col in [1..24]
@@ -53,7 +57,7 @@ class PuzzlePattern
           when "d","l","p" then hue = 4
           when "h","j" then hue = 5
           when "x" then hue = 6
-        @hex_draw.fillhex_ab(col,row,hue) unless (row==10 && col%2==1)
+        @hex_draw.fill_hex_ab("canvas",col,row,hue) unless (row==10 && col%2==1)
 
 
 
@@ -64,10 +68,10 @@ class MissingPiecesMask
   # else. Probably want to add the 'staging area' to the opaque part of the mask
   # image, so that the piece can also be dragged across that region.
 
-  constructor: (puzzle_app,puzzle_pattern) ->
+  constructor: (puzzle_app) ->
 
     @puzzle = puzzle_app
-    @pattern = puzzle_pattern
+    @pattern = @puzzle.pattern
     @grid = @pattern.grid
     @hex_draw = @puzzle.hex_draw
     @missing = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
@@ -83,23 +87,24 @@ class MissingPiecesMask
 
 
   draw_mask: () ->
+    @hex_draw.set_context("canvas")
     for bb in [1..10]
       for aa in [1..24]
-        @hex_draw.fillhex_ab(aa,bb,0) if @grid[bb][aa] in @missing
+        @hex_draw.fill_hex_ab(aa,bb,0) if @grid[bb][aa] in @missing
 
 
 
 class PuzzlePiece
-  constructor: (puzzle_app,puzzle_pattern) ->
+  constructor: (puzzle_app) ->
 
     @puzzle = puzzle_app
-    @pattern = puzzle_pattern
-    @grid = @pattern.grid
     @hexes = []
 
     @grid_model = @puzzle.grid_model
 
-    @image = new PieceImage
+    @box = new PieceRenderBox(this)
+    @p_mask  = new PiecePattern(this)
+    @image = new PieceImage(this)
     @redraw = new PieceRedrawBuffer
 
     @construct_piece("a")
@@ -108,15 +113,15 @@ class PuzzlePiece
   construct_piece: (sym) ->
     @sym = sym
     @hexes = @get_hexes()
-    @box = new PieceRenderBox(this)
-    @p_mask  = new PiecePattern(this)
+    @box.set_box_dimensions()
+    @p_mask.draw_pattern()
 
 
   get_hexes: () ->
     hexes = []
     for bb in [1..10]
       for aa in [1..24]
-        hexes.push([aa,bb]) if @grid[bb][aa] == @sym
+        hexes.push([aa,bb]) if @puzzle.pattern.grid[bb][aa] == @sym
     console.log("PIECE ID: "+@sym)
     console.log("    "+hx[0]+","+hx[1]) for hx in hexes
     hexes
@@ -138,25 +143,41 @@ class PiecePattern
 
   constructor: (piece) ->
     @piece = piece
-    @hexes = @piece.hexes
     @hex_draw = @piece.puzzle.hex_draw
     @img = document.createElement('canvas')
-    @img.width = @piece.box.width
-    @img.height = @piece.box.height
-    @draw_pattern()
+    @img.id = "piece-mask"
 
 
   draw_pattern: () ->
+    @img.width = @piece.box.width
+    @img.height = @piece.box.height
+    @hexes = @piece.hexes
+    @hex_draw.set_context("canvas")
+#    @hex_draw.set_context("piece_mask")
     for hx in @hexes
       aa = hx[0]
       bb = hx[1]
-      @hex_draw.fillhex_ab_xy(aa,bb,10,100,3)
+      @hex_draw.fill_hex_ab_xy(aa,bb,6,9,3)
 
 
 
 class PieceImage
 
+  constructor: (puzzle_piece) ->
+
+    @piece = puzzle_piece
+    @puzzle = @piece.puzzle
+#    @img = @puzzle.puzzle_view.piece_mask
+    @img = document.createElement('canvas')
+    @img.id = "piece-mask"
+    @img.width = @piece.box.width
+    @img.height = @piece.box.height
+    @piece_image_context = @img.getContext("2d")
+
+
+# FIXME Nothing references this method yet.
 draw_piece:  (a,b) ->
+    # TODO I think the books said there are more than one kind of image object.
     @pc_img = document.getElementById("piece")
     if @grid_model.in_range(a,b)
       xy = @grid_model.get_xy(a,b)
@@ -190,6 +211,7 @@ class PieceRedrawBuffer
     @redraw_active = false
 
   reset_size: (x,y) ->
+    # TODO this resets the w&h for this object but not for @redraw
     @width = x
     @height = y
 
@@ -209,7 +231,10 @@ class PieceRenderBox
   constructor: (piece) ->
 
     @piece = piece
-    @hexes = @piece.hexes
+
+
+  set_box_dimensions: () ->
+
     left = 30
     right = 0
     top = 100
@@ -217,6 +242,7 @@ class PieceRenderBox
     hx_top = 12
     hx_bottom = 0
 
+    @hexes = @piece.hexes
     for hx in @hexes
       aa = hx[0]
       bb = hx[1]
@@ -252,21 +278,45 @@ class PieceRenderBox
 
 class PuzzleView
 
-  constructor: () ->
+  constructor: (puzzle_app) ->
+
+    @puzzle = puzzle_app
 
     @backgrounds = ["#cc5050","#80cc50","#50b4cc",
                     "#b450cc","#cc8050","#50cc50",
                     "#5080cc","#cc50b4","#ccb450",
                     "#50cc80","#5050cc","#cc5080",
                     "#b4cc50","#50ccb4","#8050cc"]
-    @mask_color = @backgrounds[0] # FIXME (temporarily using same color without rotating)
 
-    @canvas = document.getElementById("puzzle-widget")
-    @context = @canvas.getContext("2d")
+    @initialize_canvases()
 
+    @context = @get_drawing_context("canvas")
     @img = document.getElementById("photo")
     @context.drawImage(@img,100,30)
 
+
+  initialize_canvases: () ->
+    @canvas = document.getElementById("puzzle-widget")
+    @context_canvas = @canvas.getContext("2d")
+
+    @piece_mask = document.createElement('canvas')
+    @piece_image_context = @piece_mask.getContext("2d")
+
+
+#  temp_draw_piece_mask: (x,y) ->
+#    alert("temp_draw_piece_mask")
+#    alert("@piece_mask width = "+@piece_mask.width)
+#    alert("@piece_mask height = "+@piece_mask.height)
+#    p_img = document.getElementById("")
+#    @context.drawImage(@piece_mask,x,y)
+
+
+  get_drawing_context: (mode) ->
+    alert("get_drawing_context:  mode = "+mode)
+    switch mode
+      when "canvas" then context = @context_canvas
+      when "piece_mask" then context = @piece_image_context
+    return context
 
 
 class PuzzleGridModel
@@ -296,28 +346,35 @@ class PuzzleGridModel
 
 class HexDraw
 
-  constructor: () ->
-    @canvas = document.getElementById("puzzle-widget")
-    @context = @canvas.getContext("2d")
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+    @puzzle_view = @puzzle.puzzle_view
+
+    @mode = null
+    @context = null
     @colors = ["#cc5050","#5050cc","#50cccc","#50cc50","#cccc50","#cc50cc","#000000"]
 
 
-  fillhex_ab: (a,b,c_no) ->
+  set_context: (mode) ->
+    @mode = mode
+    @context = @puzzle_view.get_drawing_context(mode)
+
+
+  fill_hex_ab: (a,b,c_no) ->
     x = 113+a*14
     y = 27+b*20
     y = y-9 if (a%2 == 0)
-    @fillhex_xy(x,y,c_no)
+    @fill_hex_xy(x,y,c_no)
 
 
-  fillhex_ab_xy: (a,b,x,y,c_no) ->  # {temp method ???}
+  fill_hex_ab_xy: (a,b,x,y,c_no) ->  # {temp method ???}
     xx = x+(a-1)*14
     yy = y+(b-1)*20
     yy = yy-9 if (a%2 == 0)
-    @fillhex_xy(xx,yy,c_no)
+    @fill_hex_xy(xx,yy,c_no)
 
 
-  # TODO Change this to draw on any image (like PieceMask)
-  fillhex_xy: (x,y,c_no) ->
+  fill_hex_xy: (x,y,c_no) ->
     @context.fillStyle = @colors[c_no]
     @context.beginPath()
     @context.moveTo(x,y)
