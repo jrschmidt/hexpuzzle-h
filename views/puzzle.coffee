@@ -9,8 +9,8 @@ class PuzzleApp
     @piece = new PuzzlePiece(this)
 
 
-#    alert(" T W E L V E !!!")
-#    @puzzle_view.temp_draw_piece_mask(0,0)
+    @piece.construct_piece("a")
+    @piece.draw_piece(0,0)
 
 
 
@@ -107,7 +107,6 @@ class PuzzlePiece
     @image = new PieceImage(this)
     @redraw = new PieceRedrawBuffer
 
-    @construct_piece("a")
 
 
   construct_piece: (sym) ->
@@ -115,6 +114,11 @@ class PuzzlePiece
     @hexes = @get_hexes()
     @box.set_box_dimensions()
     @p_mask.draw_pattern()
+
+
+  draw_piece: (x,y) ->
+    context = @puzzle.puzzle_view.context_canvas
+    context.drawImage(@p_mask.img,0,0)
 
 
   get_hexes: () ->
@@ -146,14 +150,15 @@ class PiecePattern
     @hex_draw = @piece.puzzle.hex_draw
     @img = document.createElement('canvas')
     @img.id = "piece-mask"
+    @piece_mask_context = @img.getContext('2d')
 
 
   draw_pattern: () ->
     @img.width = @piece.box.width
     @img.height = @piece.box.height
     @hexes = @piece.hexes
-    @hex_draw.set_context("canvas")
-#    @hex_draw.set_context("piece_mask")
+#    @hex_draw.set_context("canvas")
+    @hex_draw.set_context("piece_mask")
     for hx in @hexes
       aa = hx[0]
       bb = hx[1]
@@ -167,12 +172,14 @@ class PieceImage
 
     @piece = puzzle_piece
     @puzzle = @piece.puzzle
-#    @img = @puzzle.puzzle_view.piece_mask
-    @img = document.createElement('canvas')
-    @img.id = "piece-mask"
+    @img = @piece.p_mask.img
+#    @img = document.createElement('canvas')
+#    @img.id = "piece-mask"
     @img.width = @piece.box.width
     @img.height = @piece.box.height
-    @piece_image_context = @img.getContext("2d")
+    @piece_image_context = @img.getContext('2d')
+
+
 
 
 # FIXME Nothing references this method yet.
@@ -288,19 +295,20 @@ class PuzzleView
                     "#50cc80","#5050cc","#cc5080",
                     "#b4cc50","#50ccb4","#8050cc"]
 
-    @initialize_canvases()
+    @canvas = document.getElementById("puzzle-widget")
+    @context_canvas = @canvas.getContext('2d')
 
     @context = @get_drawing_context("canvas")
     @img = document.getElementById("photo")
     @context.drawImage(@img,100,30)
 
 
-  initialize_canvases: () ->
-    @canvas = document.getElementById("puzzle-widget")
-    @context_canvas = @canvas.getContext("2d")
+#  initialize_canvases: () ->
+#    @canvas = document.getElementById("puzzle-widget")
+#    @context_canvas = @canvas.getContext('2d')
 
-    @piece_mask = document.createElement('canvas')
-    @piece_image_context = @piece_mask.getContext("2d")
+#    @piece_mask = document.createElement('canvas')
+#    @piece_image_context = @piece_mask.getContext('2d')
 
 
 #  temp_draw_piece_mask: (x,y) ->
@@ -315,7 +323,12 @@ class PuzzleView
     alert("get_drawing_context:  mode = "+mode)
     switch mode
       when "canvas" then context = @context_canvas
-      when "piece_mask" then context = @piece_image_context
+      when "piece_mask"
+        alert("Using gdc with 'piece_mask'")
+        if @puzzle.piece
+          context = @puzzle.piece.p_mask.img.getContext('2d')
+        else
+          alert("@puzzle.piece == null")
     return context
 
 
