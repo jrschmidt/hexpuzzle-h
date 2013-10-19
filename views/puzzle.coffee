@@ -95,6 +95,10 @@ class MissingPiecesMask
 
 
 class PuzzlePiece
+  # FIXME The context scope issues that are causing so much perplexity might be
+  #       improved by defining image objects and contexts in the PuzzlePiece
+  #       class instead of the PuzzleView class for images that are part of the
+  #       puzzle piece.
   constructor: (puzzle_app) ->
 
     @puzzle = puzzle_app
@@ -104,7 +108,7 @@ class PuzzlePiece
 
     @box = new PieceRenderBox(this)
     @p_mask  = new PiecePattern(this)
-    @image = new PieceImage(this)
+#    @image = new PieceImage(this)
     @redraw = new PieceRedrawBuffer
 
 
@@ -114,6 +118,14 @@ class PuzzlePiece
     @hexes = @get_hexes()
     @box.set_box_dimensions()
     @p_mask.draw_pattern()
+    @cut_piece_from_photo()
+
+
+  cut_piece_from_photo: () ->
+    context = @p_mask.piece_mask_context
+    context.globalCompositeOperation = 'source-atop'
+    context.drawImage(@puzzle.puzzle_view.img,0,0,@box.width,@box.height,0,0,@box.width,@box.height)
+    context.globalCompositeOperation = 'source-over'
 
 
   draw_piece: (x,y) ->
@@ -166,41 +178,41 @@ class PiecePattern
 
 
 
-class PieceImage
+#class PieceImage
 
-  constructor: (puzzle_piece) ->
+#  constructor: (puzzle_piece) ->
 
-    @piece = puzzle_piece
-    @puzzle = @piece.puzzle
-    @img = @piece.p_mask.img
-#    @img = document.createElement('canvas')
-#    @img.id = "piece-mask"
-    @img.width = @piece.box.width
-    @img.height = @piece.box.height
-    @piece_image_context = @img.getContext('2d')
-
-
+#    @piece = puzzle_piece
+#    @puzzle = @piece.puzzle
+#    @img = @piece.p_mask.img
+##    @img = document.createElement('canvas')
+##    @img.id = "piece-mask"
+#    @img.width = @piece.box.width
+#    @img.height = @piece.box.height
+#    @piece_image_context = @img.getContext('2d')
 
 
-# FIXME Nothing references this method yet.
-draw_piece:  (a,b) ->
-    # TODO I think the books said there are more than one kind of image object.
-    @pc_img = document.getElementById("piece")
-    if @grid_model.in_range(a,b)
-      xy = @grid_model.get_xy(a,b)
-      xx = xy[0]+@dx
-      yy = xy[1]+@dy
 
-      @context.drawImage(@redraw,@redraw_x,@redraw_y) if @redraw_active
-      ctx = @redraw.getContext('2d')
-      ctx.drawImage(@canvas,xx,yy,@width,@height,0,0,@width,@height)
-      @redraw_active = true
-      @redraw_x = xx
-      @redraw_y =yy
 
-      @context.drawImage(@pc_img,xx,yy)
-    else
-      @context.drawImage(@pc_img,0,100)
+## FIXME Nothing references this method yet.
+#  draw_piece:  (a,b) ->
+#    # TODO I think the books said there are more than one kind of image object.
+#    @pc_img = document.getElementById("piece")
+#    if @grid_model.in_range(a,b)
+#      xy = @grid_model.get_xy(a,b)
+#      xx = xy[0]+@dx
+#      yy = xy[1]+@dy
+
+#      @context.drawImage(@redraw,@redraw_x,@redraw_y) if @redraw_active
+#      ctx = @redraw.getContext('2d')
+#      ctx.drawImage(@canvas,xx,yy,@width,@height,0,0,@width,@height)
+#      @redraw_active = true
+#      @redraw_x = xx
+#      @redraw_y =yy
+
+#      @context.drawImage(@pc_img,xx,yy)
+#    else
+#      @context.drawImage(@pc_img,0,100)
 
 
 
@@ -279,6 +291,8 @@ class PieceRenderBox
     console.log("    halves = "+halves)
     console.log("    WIDTH = "+@width)
     console.log("    HEIGHT = "+@height)
+#    console.log("    BOX-X = "+@box_x)
+#    console.log("    BOX-Y = "+@box_y)
     console.log("    ANCHOR HEX = "+@anchor_hex[0]+","+@anchor_hex[1])
 
 
