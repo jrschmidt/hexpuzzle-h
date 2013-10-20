@@ -113,6 +113,8 @@ class PuzzlePiece
 
 
 
+# FIXME  FIXME  FIXME  Need to set a separate clipping from the photo, the same
+#     dimensions as the 'render box', and draw THAT over the hex pattern!!!!
   construct_piece: (sym) ->
     @sym = sym
     @hexes = @get_hexes()
@@ -122,9 +124,20 @@ class PuzzlePiece
 
 
   cut_piece_from_photo: () ->
+
+    @photo_clip = document.createElement('canvas')
+    @photo_clip.id = "photo-clip"
+    @photo_clip.width = @box.width
+    @photo_clip.height = @box.height
+    @photo_clip_context = @photo_clip.getContext('2d')
+    @photo_clip_context.drawImage(@puzzle.puzzle_view.img,@box.box_xy[0],@box.box_xy[1],@box.width,@box.height,0,0,@box.width,@box.height)
+
+    view_context = @puzzle.puzzle_view.context_canvas
+    view_context.drawImage(@photo_clip,0,150)
+
     context = @p_mask.piece_mask_context
     context.globalCompositeOperation = 'source-atop'
-    context.drawImage(@puzzle.puzzle_view.img,0,0,@box.width,@box.height,0,0,@box.width,@box.height)
+    context.drawImage(@photo_clip,0,0)
     context.globalCompositeOperation = 'source-over'
 
 
@@ -164,7 +177,7 @@ class PiecePattern
     @img.id = "piece-mask"
     @piece_mask_context = @img.getContext('2d')
 
-
+  # FIXME It looks like this is the only place we set H&W for this img, should we set H&W somewhere else? Is that causing are alignment trouble?
   draw_pattern: () ->
     @img.width = @piece.box.width
     @img.height = @piece.box.height
@@ -286,13 +299,18 @@ class PieceRenderBox
     @width = 6 + cols*14
     @height = halves*10
 
+    a = @anchor_hex[0]
+    b = @anchor_hex[1]
+    x = a*14+7
+    y = b*20-12
+    @box_xy = [x,y]
+
     console.log("PieceRenderBox:")
     console.log("    cols = "+cols)
     console.log("    halves = "+halves)
     console.log("    WIDTH = "+@width)
     console.log("    HEIGHT = "+@height)
-#    console.log("    BOX-X = "+@box_x)
-#    console.log("    BOX-Y = "+@box_y)
+    console.log("    BOX-XY = "+@box_xy[0]+","+@box_xy[1])
     console.log("    ANCHOR HEX = "+@anchor_hex[0]+","+@anchor_hex[1])
 
 
