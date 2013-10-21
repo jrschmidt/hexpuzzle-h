@@ -9,7 +9,7 @@ class PuzzleApp
     @piece = new PuzzlePiece(this)
 
 
-    @piece.construct_piece("a")
+    @piece.construct_piece("e")
     @piece.draw_piece(0,0)
 
 
@@ -41,9 +41,6 @@ class PuzzlePattern
 
 
   draw_pattern: () -> # [(temp) - test/diagnostic method]
-    # FIXME the fill_hex methods are being refactored to take a
-    #  context/image/canvas parameter telling it WHAT to draw on.
-    #  If we use this method again we will have to adjust it accordingly.
     n = 0
     for row in [1..10]
       for col in [1..24]
@@ -95,10 +92,6 @@ class MissingPiecesMask
 
 
 class PuzzlePiece
-  # FIXME The context scope issues that are causing so much perplexity might be
-  #       improved by defining image objects and contexts in the PuzzlePiece
-  #       class instead of the PuzzleView class for images that are part of the
-  #       puzzle piece.
   constructor: (puzzle_app) ->
 
     @puzzle = puzzle_app
@@ -108,18 +101,15 @@ class PuzzlePiece
 
     @box = new PieceRenderBox(this)
     @p_mask  = new PiecePattern(this)
-#    @image = new PieceImage(this)
     @redraw = new PieceRedrawBuffer
 
 
-
-# FIXME  FIXME  FIXME  Need to set a separate clipping from the photo, the same
-#     dimensions as the 'render box', and draw THAT over the hex pattern!!!!
   construct_piece: (sym) ->
     @sym = sym
     @hexes = @get_hexes()
     @box.set_box_dimensions()
     @p_mask.draw_pattern()
+    @draw_piece(0,100)
     @cut_piece_from_photo()
 
 
@@ -133,7 +123,7 @@ class PuzzlePiece
     @photo_clip_context.drawImage(@puzzle.puzzle_view.img,@box.box_xy[0],@box.box_xy[1],@box.width,@box.height,0,0,@box.width,@box.height)
 
     view_context = @puzzle.puzzle_view.context_canvas
-    view_context.drawImage(@photo_clip,0,150)
+    view_context.drawImage(@photo_clip,0,190)
 
     context = @p_mask.piece_mask_context
     context.globalCompositeOperation = 'source-atop'
@@ -143,7 +133,7 @@ class PuzzlePiece
 
   draw_piece: (x,y) ->
     context = @puzzle.puzzle_view.context_canvas
-    context.drawImage(@p_mask.img,0,0)
+    context.drawImage(@p_mask.img,x,y)
 
 
   get_hexes: () ->
@@ -156,15 +146,16 @@ class PuzzlePiece
     hexes
 
 
-  get_dim: () ->
-    dim = [63,87] # (temporarily hard code these values)
-    dim
+#  FIXME (Used by the deprecated redraw method)
+#  get_dim: () ->
+#    dim = [63,87] # (temporarily hard code these values)
+#    dim
 
-  get_piece_xy_offset: () ->
-    dx = -14 # (temporarily hard code these values)
-    dy = 0
-    dxy = [dx,dy]
-    dxy
+#  get_piece_xy_offset: () ->
+#    dx = -14 # (temporarily hard code these values)
+#    dy = 0
+#    dxy = [dx,dy]
+#    dxy
 
 
 
@@ -177,39 +168,24 @@ class PiecePattern
     @img.id = "piece-mask"
     @piece_mask_context = @img.getContext('2d')
 
-  # FIXME It looks like this is the only place we set H&W for this img, should we set H&W somewhere else? Is that causing are alignment trouble?
+
+  # FIXME This switches odd/even for pieces with the anchor hex in an even
+  #       numbered column, putting the hexes for odd numbered columns higher
+  #       than the even numbered columns.
   draw_pattern: () ->
     @img.width = @piece.box.width
     @img.height = @piece.box.height
     @hexes = @piece.hexes
-#    @hex_draw.set_context("canvas")
     @hex_draw.set_context("piece_mask")
     for hx in @hexes
-      aa = hx[0]
-      bb = hx[1]
+      aa = hx[0] - @piece.box.anchor_hex[0] + 1
+      bb = hx[1] - @piece.box.anchor_hex[1] + 1
       @hex_draw.fill_hex_ab_xy(aa,bb,6,9,3)
 
 
 
-#class PieceImage
-
-#  constructor: (puzzle_piece) ->
-
-#    @piece = puzzle_piece
-#    @puzzle = @piece.puzzle
-#    @img = @piece.p_mask.img
-##    @img = document.createElement('canvas')
-##    @img.id = "piece-mask"
-#    @img.width = @piece.box.width
-#    @img.height = @piece.box.height
-#    @piece_image_context = @img.getContext('2d')
-
-
-
-
-## FIXME Nothing references this method yet.
+## FIXME Saving this method from a discontinued class as an example because the redraw works correctly.
 #  draw_piece:  (a,b) ->
-#    # TODO I think the books said there are more than one kind of image object.
 #    @pc_img = document.getElementById("piece")
 #    if @grid_model.in_range(a,b)
 #      xy = @grid_model.get_xy(a,b)
@@ -230,7 +206,7 @@ class PiecePattern
 
 
 class PieceRedrawBuffer
-# TODO Set a height delta of 10px if anchor hex column is odd.
+# TODO Set a height delta of 10px if anchor hex column is odd?
 
   constructor: () ->
     @redraw = document.createElement('canvas')
@@ -264,7 +240,8 @@ class PieceRenderBox
 
     @piece = piece
 
-
+  # FIXME Seems to miss a half hex of height sometimes when the highest hex is
+  #       in an even-numbered column and the lowest hex is in an odd-numbered column.
   set_box_dimensions: () ->
 
     left = 30
@@ -335,32 +312,13 @@ class PuzzleView
     @context.drawImage(@img,100,30)
 
 
-#  initialize_canvases: () ->
-#    @canvas = document.getElementById("puzzle-widget")
-#    @context_canvas = @canvas.getContext('2d')
-
-#    @piece_mask = document.createElement('canvas')
-#    @piece_image_context = @piece_mask.getContext('2d')
-
-
-#  temp_draw_piece_mask: (x,y) ->
-#    alert("temp_draw_piece_mask")
-#    alert("@piece_mask width = "+@piece_mask.width)
-#    alert("@piece_mask height = "+@piece_mask.height)
-#    p_img = document.getElementById("")
-#    @context.drawImage(@piece_mask,x,y)
-
-
   get_drawing_context: (mode) ->
-    alert("get_drawing_context:  mode = "+mode)
     switch mode
       when "canvas" then context = @context_canvas
       when "piece_mask"
-        alert("Using gdc with 'piece_mask'")
         if @puzzle.piece
           context = @puzzle.piece.p_mask.img.getContext('2d')
         else
-          alert("@puzzle.piece == null")
     return context
 
 
@@ -412,7 +370,7 @@ class HexDraw
     @fill_hex_xy(x,y,c_no)
 
 
-  fill_hex_ab_xy: (a,b,x,y,c_no) ->  # {temp method ???}
+  fill_hex_ab_xy: (a,b,x,y,c_no) ->
     xx = x+(a-1)*14
     yy = y+(b-1)*20
     yy = yy-9 if (a%2 == 0)
