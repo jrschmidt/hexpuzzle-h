@@ -9,7 +9,7 @@ class PuzzleApp
     @piece = new PuzzlePiece(this)
 
 
-    @piece.construct_piece("e")
+    @piece.construct_piece("p")
     @piece.draw_piece(0,0)
 
 
@@ -26,6 +26,8 @@ class PuzzlePattern
 
     @grid = @get_pattern_grid(@dstring)
 
+    @draw_pattern()
+
 
   get_pattern_grid: (data_string) ->
     grid = []
@@ -41,6 +43,7 @@ class PuzzlePattern
 
 
   draw_pattern: () -> # [(temp) - test/diagnostic method]
+    @hex_draw.set_context("canvas")
     n = 0
     for row in [1..10]
       for col in [1..24]
@@ -54,7 +57,7 @@ class PuzzlePattern
           when "d","l","p" then hue = 4
           when "h","j" then hue = 5
           when "x" then hue = 6
-        @hex_draw.fill_hex_ab("canvas",col,row,hue) unless (row==10 && col%2==1)
+        @hex_draw.fill_hex_ab(col,row,hue) unless (row==10 && col%2==1)
 
 
 
@@ -73,14 +76,14 @@ class MissingPiecesMask
     @hex_draw = @puzzle.hex_draw
     @missing = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
 
-    # ------[(temp) test data generator]------
-    take = Math.floor(24*Math.random())
-    for i in [1..take]
-      next = Math.floor(24*Math.random())
-      delete @missing[next]
-    # ------[(temp) test data generator]------
+#    # ------[(temp) test data generator]------
+#    take = Math.floor(24*Math.random())
+#    for i in [1..take]
+#      next = Math.floor(24*Math.random())
+#      delete @missing[next]
+#    # ------[(temp) test data generator]------
 
-    @draw_mask()
+#    @draw_mask()
 
 
   draw_mask: () ->
@@ -136,6 +139,7 @@ class PuzzlePiece
     context.drawImage(@p_mask.img,x,y)
 
 
+  # TODO Does this method belong in PuzzlePattern class?
   get_hexes: () ->
     hexes = []
     for bb in [1..10]
@@ -169,19 +173,33 @@ class PiecePattern
     @piece_mask_context = @img.getContext('2d')
 
 
-  # FIXME This switches odd/even for pieces with the anchor hex in an even
-  #       numbered column, putting the hexes for odd numbered columns higher
-  #       than the even numbered columns.
   draw_pattern: () ->
     @img.width = @piece.box.width
     @img.height = @piece.box.height
     @hexes = @piece.hexes
     @hex_draw.set_context("piece_mask")
+    xx = 6
+    if @piece.box.high_hex_adjust == true then hx_adjust = -9 else hx_adjust = 0
     for hx in @hexes
       aa = hx[0] - @piece.box.anchor_hex[0] + 1
       bb = hx[1] - @piece.box.anchor_hex[1] + 1
-      @hex_draw.fill_hex_ab_xy(aa,bb,6,9,3)
 
+      if @piece.box.anchor_hex[0] % 2 == 1
+        yy = 9
+      else
+        if hx[0]%2 == 1
+          yy = 18
+        else
+          yy = 0
+      yy = yy + hx_adjust
+      @fill_hex_ab_xy(aa,bb,xx,yy,3)
+
+
+  fill_hex_ab_xy: (a,b,x,y,c_no) ->
+    xx = x+(a-1)*14
+    yy = y+(b-1)*20
+    yy = yy-9 if (a%2 == 0)
+    @hex_draw.fill_hex_xy(xx,yy,c_no)
 
 
 ## FIXME Saving this method from a discontinued class as an example because the redraw works correctly.
@@ -240,8 +258,7 @@ class PieceRenderBox
 
     @piece = piece
 
-  # FIXME Seems to miss a half hex of height sometimes when the highest hex is
-  #       in an even-numbered column and the lowest hex is in an odd-numbered column.
+
   set_box_dimensions: () ->
 
     left = 30
@@ -250,6 +267,9 @@ class PieceRenderBox
     bottom = 0
     hx_top = 12
     hx_bottom = 0
+    high_hex_col = null
+    low_hex_col = null
+    @high_hex_adjust = false
 
     @hexes = @piece.hexes
     for hx in @hexes
@@ -261,15 +281,13 @@ class PieceRenderBox
       if b < top
         top = b
         hx_top = bb
+        high_hex_col = aa
       if b > bottom
         bottom = b
         hx_bottom = bb
+        low_hex_col = aa
 
-    hx_left = left
-    hx_right = right
-    @anchor_hex = [hx_left,hx_top]
-    @hex_width = hx_right - hx_left + 1
-    @hex_height = hx_bottom - hx_top + 1
+    @anchor_hex = [left,hx_top]
 
     cols = right - left + 1
     halves = (bottom - top)/5 + 2
@@ -282,12 +300,27 @@ class PieceRenderBox
     y = b*20-12
     @box_xy = [x,y]
 
+
+    if halves % 2 == 1
+      if (high_hex_col - a) % 2 == 0 and a%2 == 1 then @high_hex_adjust = true
+
+      anchor_in_hexes = false
+      ax = @anchor_hex[0]
+      ay = @anchor_hex[1]
+      for hx in @hexes
+        anchor_in_hexes = true if hx[0] == ax and hx[1] == ay
+
+      if (not anchor_in_hexes) and (high_hex_col - a) % 2 == 1
+        console.log("Non-rendered anchor hex is out of bounds (higher than high hex).")
+        @high_hex_adjust = true
+
     console.log("PieceRenderBox:")
     console.log("    cols = "+cols)
     console.log("    halves = "+halves)
     console.log("    WIDTH = "+@width)
     console.log("    HEIGHT = "+@height)
     console.log("    BOX-XY = "+@box_xy[0]+","+@box_xy[1])
+    console.log("    HIGH HEX ADJUST = "+@high_hex_adjust)
     console.log("    ANCHOR HEX = "+@anchor_hex[0]+","+@anchor_hex[1])
 
 
@@ -368,13 +401,6 @@ class HexDraw
     y = 27+b*20
     y = y-9 if (a%2 == 0)
     @fill_hex_xy(x,y,c_no)
-
-
-  fill_hex_ab_xy: (a,b,x,y,c_no) ->
-    xx = x+(a-1)*14
-    yy = y+(b-1)*20
-    yy = yy-9 if (a%2 == 0)
-    @fill_hex_xy(xx,yy,c_no)
 
 
   fill_hex_xy: (x,y,c_no) ->
