@@ -9,8 +9,7 @@ class PuzzleApp
     @piece = new PuzzlePiece(this)
 
     @pattern.draw_pattern()
-    @mask.draw_mask()
-    @piece.construct_piece("h")
+    @piece.construct_piece("e")
     @piece.draw_piece(0,0)
     @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
 
@@ -136,15 +135,9 @@ class PuzzlePiece
 
   draw_piece_ab: (a,b) ->
     x = 107+a*14
-    y = 27+b*20
-    y = y-9 if (a%2 == 0)
+    y = 18+b*20
+    y = y+9 if @box.high_hex_adjust
     @draw_piece(x,y)
-
-
-#    x = 113+a*14
-#    y = 27+b*20
-#    y = y-9 if (a%2 == 0)
-#    @fill_hex_xy(x,y,c_no)
 
 
   draw_piece: (x,y) ->
