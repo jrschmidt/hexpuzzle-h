@@ -8,9 +8,11 @@ class PuzzleApp
     @mask = new MissingPiecesMask(this)
     @piece = new PuzzlePiece(this)
 
-
-    @piece.construct_piece("p")
+    @pattern.draw_pattern()
+    @mask.draw_mask()
+    @piece.construct_piece("h")
     @piece.draw_piece(0,0)
+    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
 
 
 
@@ -25,8 +27,6 @@ class PuzzlePattern
     @dstring = @canvas.getAttribute("data-puzzle-pattern")
 
     @grid = @get_pattern_grid(@dstring)
-
-    @draw_pattern()
 
 
   get_pattern_grid: (data_string) ->
@@ -76,12 +76,12 @@ class MissingPiecesMask
     @hex_draw = @puzzle.hex_draw
     @missing = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
 
-#    # ------[(temp) test data generator]------
-#    take = Math.floor(24*Math.random())
-#    for i in [1..take]
-#      next = Math.floor(24*Math.random())
-#      delete @missing[next]
-#    # ------[(temp) test data generator]------
+    # ------[(temp) test data generator]------
+    take = Math.floor(24*Math.random())
+    for i in [1..take]
+      next = Math.floor(24*Math.random())
+      delete @missing[next]
+    # ------[(temp) test data generator]------
 
 #    @draw_mask()
 
@@ -132,6 +132,19 @@ class PuzzlePiece
     context.globalCompositeOperation = 'source-atop'
     context.drawImage(@photo_clip,0,0)
     context.globalCompositeOperation = 'source-over'
+
+
+  draw_piece_ab: (a,b) ->
+    x = 107+a*14
+    y = 27+b*20
+    y = y-9 if (a%2 == 0)
+    @draw_piece(x,y)
+
+
+#    x = 113+a*14
+#    y = 27+b*20
+#    y = y-9 if (a%2 == 0)
+#    @fill_hex_xy(x,y,c_no)
 
 
   draw_piece: (x,y) ->
@@ -288,6 +301,7 @@ class PieceRenderBox
         low_hex_col = aa
 
     @anchor_hex = [left,hx_top]
+    anchor_top = 5 + 10*(hx_top-1) + 5*(left%2)
 
     cols = right - left + 1
     halves = (bottom - top)/5 + 2
@@ -310,11 +324,20 @@ class PieceRenderBox
       for hx in @hexes
         anchor_in_hexes = true if hx[0] == ax and hx[1] == ay
 
-      if (not anchor_in_hexes) and (high_hex_col - a) % 2 == 1
+      if (not anchor_in_hexes) and (high_hex_col - a) % 2 == 1 and anchor_top < top
         console.log("Non-rendered anchor hex is out of bounds (higher than high hex).")
         @high_hex_adjust = true
 
     console.log("PieceRenderBox:")
+    console.log("    top = "+top)
+    console.log("    anchor_top = "+anchor_top)
+    console.log("    bottom = "+bottom)
+    console.log("    left = "+left)
+    console.log("    right = "+right)
+#    console.log("     = "+)
+#    console.log("     = "+)
+#    console.log("     = "+)
+#    console.log("     = "+)
     console.log("    cols = "+cols)
     console.log("    halves = "+halves)
     console.log("    WIDTH = "+@width)
