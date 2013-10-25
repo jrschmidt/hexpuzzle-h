@@ -9,9 +9,21 @@ class PuzzleApp
     @piece = new PuzzlePiece(this)
 
     @pattern.draw_pattern()
-    @piece.construct_piece("e")
+    @piece.construct_piece("a")
     @piece.draw_piece(0,0)
-    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
+
+#    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
+
+    loop
+      a = 1 + Math.floor(20*Math.random())
+      b = 1 + Math.floor(6*Math.random())
+
+#    b = 7
+#    for a in [1..24]
+
+      @piece.draw_piece_ab(a,b)
+      alert("Draw puzzle piece at hex location "+a+","+b)
+      @pattern.draw_pattern()
 
 
 
@@ -114,7 +126,6 @@ class PuzzlePiece
     @draw_piece(0,100)
     @cut_piece_from_photo()
 
-
   cut_piece_from_photo: () ->
 
     @photo_clip = document.createElement('canvas')
@@ -134,9 +145,12 @@ class PuzzlePiece
 
 
   draw_piece_ab: (a,b) ->
+
+    b = b-1 if a%2 == 0 and @box.anchor_hex[0] % 2 == 1
     x = 107+a*14
     y = 18+b*20
     y = y+9 if @box.high_hex_adjust
+    y = y+9 if Math.abs(@box.anchor_hex[0] - a) % 2 == 1
     @draw_piece(x,y)
 
 
@@ -358,7 +372,7 @@ class PuzzleView
 
     @context = @get_drawing_context("canvas")
     @img = document.getElementById("photo")
-    @context.drawImage(@img,100,30)
+#    @context.drawImage(@img,100,30)
 
 
   get_drawing_context: (mode) ->
@@ -368,6 +382,7 @@ class PuzzleView
         if @puzzle.piece
           context = @puzzle.piece.p_mask.img.getContext('2d')
         else
+          context = null
     return context
 
 
