@@ -12,18 +12,7 @@ class PuzzleApp
     @piece.construct_piece("a")
     @piece.draw_piece(0,0)
 
-#    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
-
-    loop
-      a = 1 + Math.floor(20*Math.random())
-      b = 1 + Math.floor(6*Math.random())
-
-#    b = 7
-#    for a in [1..24]
-
-      @piece.draw_piece_ab(a,b)
-      alert("Draw puzzle piece at hex location "+a+","+b)
-      @pattern.draw_pattern()
+    @piece.draw_piece_ab(1,1)
 
 
 
@@ -452,6 +441,18 @@ class HexDraw
 #   #   #   #   #   #
 #   Global Scope Statements
 #   #   #   #   #   #
+
+
+@mousedown = (e) ->
+  @canvas = document.getElementById("puzzle-widget")
+  dx = @canvas.offsetLeft
+  dy = @canvas.offsetTop
+  px = e.pageX
+  py = e.pageY
+  x = px-dx
+  y = py-dy
+  console.log("mouse click: "+x+","+y)
+#  @zip.click(x,y)
 
 
 start = () ->
