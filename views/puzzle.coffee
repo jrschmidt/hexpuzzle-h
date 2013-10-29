@@ -8,7 +8,7 @@ class PuzzleApp
     @events = new EventHandler(this)
     @pixel_test = new PixelHexTester(this)
 
-    @pixel_test.test(2000)
+    @pixel_test.test(10000)
 
 #    @pattern = new PuzzlePattern(this)
 #    @mask = new MissingPiecesMask(this)
@@ -57,7 +57,7 @@ class PixelHexTester
     context = canvas.getContext('2d')
     context.fillStyle = color
     context.fillRect(x,y,1,1)
-    console.log(@color_name(color)+" dot at "+x+","+y)
+#    console.log(@color_name(color)+" dot at "+x+","+y)
 
 
   color_name: (cc) ->
@@ -472,22 +472,33 @@ class PuzzleGridModel
 
   get_xy: (a,b) ->
     if @in_range(a,b)
-      t_dx = -3 # (temporary offsets for development)
+      t_dx = -3
       t_dy = -2
       x = 103 + 14.5*a + (a%2)/2 + t_dx
       y = 28 + 19*b + (a%2)*10 + t_dy
       xy = [x,y]
     else
       xy = [0,0]
-    xy
+    return xy
 
 
   get_hex: (x,y) ->
-    hex = []
+    hex = [0,0]
+    in_bounds = true
     aa = Math.floor((x-1)/14.5)-7
-    bb = Math.floor((y-9*(aa%2)-8)/19)-1
-    hex = [aa,bb]
-    hex
+    bb = Math.floor((y-9*(aa%2)-8.5)/19)-1
+    in_bounds = false if @in_range(aa,bb) == false
+
+    corner = @get_xy(aa,bb)
+    ctr_x = corner[0]+9
+    ctr_y = corner[1]+10
+    dx = Math.abs(x-ctr_x)
+    dy = Math.abs(y-ctr_y)
+    r2 = dx*dx+dy*dy
+    in_bounds = false if r2>67 #(if radius > 8.2)
+
+    hex = [aa,bb] if (in_bounds == true)
+    return hex
 
 
   in_range: (a,b) ->
@@ -497,7 +508,7 @@ class PuzzleGridModel
     ok = false if a<1 || a>24
     ok = false if b<1 || b>10
     ok = false if b == 10 && a%2 == 1
-    ok
+    return ok
 
 
 
