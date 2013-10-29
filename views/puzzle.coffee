@@ -8,11 +8,11 @@ class PuzzleApp
     @mask = new MissingPiecesMask(this)
     @piece = new PuzzlePiece(this)
 
-    @pattern.draw_pattern()
-    @piece.construct_piece("a")
+#    @pattern.draw_pattern()
+    @piece.construct_piece("e")
     @piece.draw_piece(0,0)
 
-    @piece.draw_piece_ab(1,1)
+#    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
 
 
 
@@ -306,9 +306,18 @@ class PieceRenderBox
 
     a = @anchor_hex[0]
     b = @anchor_hex[1]
+    if anchor_top > top
+      high_hex_half_step = true
+    else
+      high_hex_half_step = false
+    
     x = a*14+7
     y = b*20-12
     @box_xy = [x,y]
+
+    ca_x = 10
+    if high_hex_half_step then ca_y = 19 else ca_y = 9
+    @center_to_anchor_delta = [ca_x,ca_y]
 
 
     if halves % 2 == 1
@@ -327,11 +336,11 @@ class PieceRenderBox
     console.log("PieceRenderBox:")
     console.log("    top = "+top)
     console.log("    anchor_top = "+anchor_top)
+    console.log("    high_hex_half_step = "+high_hex_half_step)
     console.log("    bottom = "+bottom)
     console.log("    left = "+left)
     console.log("    right = "+right)
-#    console.log("     = "+)
-#    console.log("     = "+)
+    console.log("    center to anchor delta = "+@center_to_anchor_delta[0]+","+@center_to_anchor_delta[1])
 #    console.log("     = "+)
 #    console.log("     = "+)
     console.log("    cols = "+cols)
@@ -361,7 +370,7 @@ class PuzzleView
 
     @context = @get_drawing_context("canvas")
     @img = document.getElementById("photo")
-#    @context.drawImage(@img,100,30)
+    @context.drawImage(@img,100,30)
 
 
   get_drawing_context: (mode) ->
@@ -387,6 +396,15 @@ class PuzzleGridModel
     else
       xy = [0,0]
     xy
+
+#  get_point: (x,y) ->
+#    point = []
+#    a = -1
+#    b = -1
+#    r2 = 999
+#    in_bounds = true
+#    b = Math.floor((y-28)/44)+1
+#    a = Math.floor((x-125+25*b)/50)
 
 
   in_range: (a,b) ->
@@ -452,6 +470,14 @@ class HexDraw
   x = px-dx
   y = py-dy
   console.log("mouse click: "+x+","+y)
+
+  aaa = Math.floor((x)/14.5)-7
+  bbb = Math.floor((y-9*(aaa%2)-9)/19)-1
+#  bbb = Math.floor((y-28)/44)+1
+#  aaa = Math.floor((x-125+25*bbb)/50)
+  console.log("A*,B* ~= "+aaa+","+bbb)
+
+
 #  @zip.click(x,y)
 
 
