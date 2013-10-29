@@ -4,15 +4,99 @@ class PuzzleApp
     @puzzle_view = new PuzzleView(this)
     @grid_model = new PuzzleGridModel
     @hex_draw = new HexDraw(this)
-    @pattern = new PuzzlePattern(this)
-    @mask = new MissingPiecesMask(this)
-    @piece = new PuzzlePiece(this)
+
+    @events = new EventHandler(this)
+    @pixel_test = new PixelHexTester(this)
+
+    @pixel_test.test(2000)
+
+#    @pattern = new PuzzlePattern(this)
+#    @mask = new MissingPiecesMask(this)
+#    @piece = new PuzzlePiece(this)
 
 #    @pattern.draw_pattern()
-    @piece.construct_piece("e")
-    @piece.draw_piece(0,0)
+#    @piece.construct_piece("e")
+#    @piece.draw_piece(0,0)
 
 #    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
+
+
+
+class PixelHexTester
+
+
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+    @grid_model = @puzzle.grid_model
+    @xx = 190
+    @yy = 80
+    @wd = 52
+    @ht = 80
+
+
+  test: (n) ->
+    for k in [0..n]
+      @pixel_test()
+
+
+  pixel_test: () ->
+    x = @xx + Math.floor(@wd*Math.random())
+    y = @yy + Math.floor(@ht*Math.random())
+    @dot(x,y)
+
+
+  dot: (x,y) ->
+    hex = @grid_model.get_hex(x,y)
+    if hex[0] in [6,7,8] and hex[1] in [3,4,5]
+      color = @get_dot_color(hex)
+      @put_dot(x,y,color)
+
+
+  put_dot: (x,y,color) ->
+    canvas = document.getElementById("puzzle-widget")
+    context = canvas.getContext('2d')
+    context.fillStyle = color
+    context.fillRect(x,y,1,1)
+    console.log(@color_name(color)+" dot at "+x+","+y)
+
+
+  color_name: (cc) ->
+    cc = "   red" if cc == "#ff0000"
+    cc = " green" if cc == "#00ff00"
+    cc = "yellow" if cc == "#ffff00"
+    cc
+
+
+  get_dot_color: (hex) ->
+    color = "#00ff00" if (hex[0] == 6 or hex[0] == 8) and hex[1] == 3
+    color = "#ff0000" if (hex[0] == 6 or hex[0] == 8) and hex[1] == 4
+    color = "#ffff00" if (hex[0] == 6 or hex[0] == 8) and hex[1] == 5
+    color = "#ffff00" if hex[0] == 7 and hex[1] == 3
+    color = "#00ff00" if hex[0] == 7 and hex[1] == 4
+    color = "#ff0000" if hex[0] == 7 and hex[1] == 5
+    color
+
+
+
+class EventHandler
+
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+    @grid_model = @puzzle.grid_model
+
+
+  click_handle: (e) ->
+    @canvas = document.getElementById("puzzle-widget")
+    dx = @canvas.offsetLeft
+    dy = @canvas.offsetTop
+    px = e.pageX
+    py = e.pageY
+    x = px-dx
+    y = py-dy
+
+    console.log("mouse click: "+x+","+y)
+    hex = @grid_model.get_hex(x,y)
+    console.log("A*,B* ~= "+hex[0]+","+hex[1])
 
 
 
@@ -397,14 +481,13 @@ class PuzzleGridModel
       xy = [0,0]
     xy
 
-#  get_point: (x,y) ->
-#    point = []
-#    a = -1
-#    b = -1
-#    r2 = 999
-#    in_bounds = true
-#    b = Math.floor((y-28)/44)+1
-#    a = Math.floor((x-125+25*b)/50)
+
+  get_hex: (x,y) ->
+    hex = []
+    aa = Math.floor((x-1)/14.5)-7
+    bb = Math.floor((y-9*(aa%2)-8)/19)-1
+    hex = [aa,bb]
+    hex
 
 
   in_range: (a,b) ->
@@ -462,23 +545,7 @@ class HexDraw
 
 
 @mousedown = (e) ->
-  @canvas = document.getElementById("puzzle-widget")
-  dx = @canvas.offsetLeft
-  dy = @canvas.offsetTop
-  px = e.pageX
-  py = e.pageY
-  x = px-dx
-  y = py-dy
-  console.log("mouse click: "+x+","+y)
-
-  aaa = Math.floor((x)/14.5)-7
-  bbb = Math.floor((y-9*(aaa%2)-9)/19)-1
-#  bbb = Math.floor((y-28)/44)+1
-#  aaa = Math.floor((x-125+25*bbb)/50)
-  console.log("A*,B* ~= "+aaa+","+bbb)
-
-
-#  @zip.click(x,y)
+  @app.events.click_handle(e)
 
 
 start = () ->
