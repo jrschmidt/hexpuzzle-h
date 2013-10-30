@@ -20,7 +20,7 @@ class PuzzleApp
     @hex_draw.draw_all_hexes()
 
     @pixel_test = new PixelHexTester(this)
-    @pixel_test.test(10000)
+    @pixel_test.test(100000)
 
 
 
@@ -30,10 +30,10 @@ class PixelHexTester
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @grid_model = @puzzle.grid_model
-    @xx = 190
-    @yy = 80
-    @wd = 52
-    @ht = 80
+    @xx = 120
+    @yy = 40
+    @wd = 350
+    @ht = 200
 
 
   test: (n) ->
@@ -49,7 +49,9 @@ class PixelHexTester
 
   dot: (x,y) ->
     hex = @grid_model.get_hex(x,y)
-    if hex[0] in [6,7,8] and hex[1] in [3,4,5]
+
+#    if hex[0] in [6,7,8] and hex[1] in [3,4,5]
+    if hex[0] > 0 and hex[0] < 25 and hex[1] > 0 and hex[1] < 11
       color = @get_dot_color(hex)
       @put_dot(x,y,color)
 
@@ -70,12 +72,12 @@ class PixelHexTester
 
 
   get_dot_color: (hex) ->
-    color = "#00ff00" if (hex[0] == 6 or hex[0] == 8) and hex[1] == 3
-    color = "#ff0000" if (hex[0] == 6 or hex[0] == 8) and hex[1] == 4
-    color = "#ffff00" if (hex[0] == 6 or hex[0] == 8) and hex[1] == 5
-    color = "#ffff00" if hex[0] == 7 and hex[1] == 3
-    color = "#00ff00" if hex[0] == 7 and hex[1] == 4
-    color = "#ff0000" if hex[0] == 7 and hex[1] == 5
+    color = "#00ff00" if hex[0] % 2 == 0 and hex[1] % 3 == 0
+    color = "#ff0000" if hex[0] % 2 == 0 and hex[1] % 3 == 1
+    color = "#ffff00" if hex[0] % 2 == 0 and hex[1] % 3 == 2
+    color = "#ffff00" if hex[0] % 2 == 1 and hex[1] % 3 == 0
+    color = "#00ff00" if hex[0] % 2 == 1 and hex[1] % 3 == 1
+    color = "#ff0000" if hex[0] % 2 == 1 and hex[1] % 3 == 2
     color
 
 
@@ -472,12 +474,17 @@ class PuzzleView
 
 class PuzzleGridModel
 
-  get_xy: (a,b) ->
+  constructor: () ->
+      # When adjusting pixel-to-hex x,y alignments, make the changes on these
+      # constants, not in the methods.
+      @t_dx = 1
+      @t_dy = -7
+
+
+  get_xy: (a,b) -> 
     if @in_range(a,b)
-      t_dx = -3
-      t_dy = -2
-      x = 103 + 14.5*a + (a%2)/2 + t_dx
-      y = 28 + 19*b + (a%2)*10 + t_dy
+      x = 103 + 14.5*a + (a%2)/2 + @t_dx
+      y = 28 + 19*b + (a%2)*10 + @t_dy
       xy = [x,y]
     else
       xy = [0,0]
@@ -487,8 +494,8 @@ class PuzzleGridModel
   get_hex: (x,y) ->
     hex = [0,0]
     in_bounds = true
-    aa = Math.floor((x-1)/14.5)-7
-    bb = Math.floor((y-9*(aa%2)-8.5)/19)-1
+    aa = Math.floor((x-4-@t_dx)/14.5)-7
+    bb = Math.floor((y-9*(aa%2)-10.5-@t_dy)/19)-1
     in_bounds = false if @in_range(aa,bb) == false
 
     corner = @get_xy(aa,bb)
@@ -551,12 +558,20 @@ class HexDraw
     @context.closePath()
 
 
-  draw_all_hexes: () -> # [(temp) - test/diagnostic method]
+  draw_all_hexes: () -> # [test/diagnostic method]
     @set_context("canvas")
     for row in [1..10]
       for col in [1..24]
-
-        c = Math.floor(7*Math.random())
+        if row%2 == 0
+          if col%2 == 0
+            c = 1
+          else
+            c = 2
+        else
+          if col%2 == 0
+            c = 3
+          else
+            c = 4
         @fill_hex_ab(col,row,c) unless (row==10 && col%2==1)
 
 
