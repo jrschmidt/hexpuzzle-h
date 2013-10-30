@@ -6,9 +6,6 @@ class PuzzleApp
     @hex_draw = new HexDraw(this)
 
     @events = new EventHandler(this)
-    @pixel_test = new PixelHexTester(this)
-
-    @pixel_test.test(10000)
 
 #    @pattern = new PuzzlePattern(this)
 #    @mask = new MissingPiecesMask(this)
@@ -19,6 +16,11 @@ class PuzzleApp
 #    @piece.draw_piece(0,0)
 
 #    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
+
+    @hex_draw.draw_all_hexes()
+
+    @pixel_test = new PixelHexTester(this)
+    @pixel_test.test(10000)
 
 
 
@@ -547,6 +549,15 @@ class HexDraw
     @context.lineTo(x,y)
     @context.fill()
     @context.closePath()
+
+
+  draw_all_hexes: () -> # [(temp) - test/diagnostic method]
+    @set_context("canvas")
+    for row in [1..10]
+      for col in [1..24]
+
+        c = Math.floor(7*Math.random())
+        @fill_hex_ab(col,row,c) unless (row==10 && col%2==1)
 
 
 
