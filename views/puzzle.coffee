@@ -20,7 +20,9 @@ class PuzzleApp
     @hex_draw.draw_all_hexes()
 
     @pixel_test = new PixelHexTester(this)
+#    @pixel_test.mark_hex_centerpoints()
     @pixel_test.test(100000)
+
 
 
 
@@ -31,9 +33,9 @@ class PixelHexTester
     @puzzle = puzzle_app
     @grid_model = @puzzle.grid_model
     @xx = 120
-    @yy = 40
+    @yy = 30
     @wd = 350
-    @ht = 200
+    @ht = 220
 
 
   test: (n) ->
@@ -45,6 +47,17 @@ class PixelHexTester
     x = @xx + Math.floor(@wd*Math.random())
     y = @yy + Math.floor(@ht*Math.random())
     @dot(x,y)
+
+
+  mark_hex_centerpoints: () ->
+    for aa in [1..24]
+      for bb in [1..10]
+        if not (aa%2 == 1 and bb == 10)
+          corner = @grid_model.get_xy(aa,bb)
+          @put_dot(corner[0],corner[1],"#666666")
+          ctr_x = corner[0]+9
+          ctr_y = corner[1]+10
+          @put_dot(ctr_x,ctr_y,"#ff0000")
 
 
   dot: (x,y) ->
@@ -477,14 +490,14 @@ class PuzzleGridModel
   constructor: () ->
       # When adjusting pixel-to-hex x,y alignments, make the changes on these
       # constants, not in the methods.
-      @t_dx = 1
-      @t_dy = -7
+      @t_dx = 8
+      @t_dy = -13
 
 
   get_xy: (a,b) -> 
     if @in_range(a,b)
-      x = 103 + 14.5*a + (a%2)/2 + @t_dx
-      y = 28 + 19*b + (a%2)*10 + @t_dy
+      x = 100 + 14*a + (a%2)/2 + @t_dx
+      y = 30 + 20*b + (a%2)*10 + @t_dy
       xy = [x,y]
     else
       xy = [0,0]
@@ -494,8 +507,8 @@ class PuzzleGridModel
   get_hex: (x,y) ->
     hex = [0,0]
     in_bounds = true
-    aa = Math.floor((x-4-@t_dx)/14.5)-7
-    bb = Math.floor((y-9*(aa%2)-10.5-@t_dy)/19)-1
+    aa = Math.floor((x-4-@t_dx)/14)-7
+    bb = Math.floor((y-9*(aa%2)-10.5-@t_dy)/20)-1
     in_bounds = false if @in_range(aa,bb) == false
 
     corner = @get_xy(aa,bb)
