@@ -11,16 +11,16 @@ class PuzzleApp
     @events = new EventHandler(this)
 
     @pattern = new PuzzlePattern(this)
-#    @mask = new MissingPiecesMask(this)
-#    @piece = new PuzzlePiece(this)
+    @mask = new MissingPiecesMask(this)
+    @piece = new PuzzlePiece(this)
 
 #    @pattern.draw_pattern()
-#    @piece.construct_piece("e")
-#    @piece.draw_piece(0,0)
+    @piece.construct_piece("h")
+    @piece.draw_piece(0,0)
 
 #    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
 
-    @hex_box.set_hex_box("f")
+    @hex_box.set_hex_box("h")
 
     @hex_draw.draw_all_hexes()
 
@@ -616,18 +616,28 @@ class HexBox
       aa = hx[0]
       b2 = 2*hx[1] + aa%2 - 1
       @test_left_right_top_bottom(aa,b2)
-    if @left%2 == 1
-      @first_column = "odd"
-    else
-      @first_column = "even"
+    @get_corner_fit()
 
     console.log("HexBox: left = "+@left)
     console.log("HexBox: right = "+@right)
     console.log("HexBox: top = "+@top)
     console.log("HexBox: bottom = "+@bottom)
 #    console.log("HexBox: ")
-    console.log("HexBox: first column = "+@first_column)
+    console.log("HexBox: corner fit = "+@corner_fit)
 #    console.log("HexBox: ")
+
+
+  get_corner_fit: () ->
+    if @left%2 == 1
+      if @top%2 == 1
+        @corner_fit = "low"
+      else
+        @corner_fit = "high"
+    else
+      if @top%2 == 1
+        @corner_fit = "high"
+      else
+        @corner_fit = "low"
 
 
   test_left_right_top_bottom: (aa,b2) ->
@@ -670,8 +680,6 @@ class HexBox
     for bb in [1..10]
       for aa in [1..24]
         hexes.push([aa,bb]) if @puzzle.pattern.grid[bb][aa] == piece_symbol
-    console.log("PIECE ID: "+piece_symbol)
-    console.log("    "+hx[0]+","+hx[1]) for hx in hexes
     return hexes
 
 
