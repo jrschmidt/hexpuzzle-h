@@ -3,11 +3,14 @@ class PuzzleApp
   constructor: () ->
     @puzzle_view = new PuzzleView(this)
     @grid_model = new PuzzleGridModel
+    @hex_grid = new HexGrid(this)
     @hex_draw = new HexDraw(this)
+
+    @hex_box = new HexBox(this)
 
     @events = new EventHandler(this)
 
-#    @pattern = new PuzzlePattern(this)
+    @pattern = new PuzzlePattern(this)
 #    @mask = new MissingPiecesMask(this)
 #    @piece = new PuzzlePiece(this)
 
@@ -17,12 +20,13 @@ class PuzzleApp
 
 #    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
 
+    @hex_box.get_hexes("e")
+
     @hex_draw.draw_all_hexes()
 
-    @pixel_test = new PixelHexTester(this)
+#    @pixel_test = new PixelHexTester(this)
 #    @pixel_test.mark_hex_centerpoints()
-    @pixel_test.test(100000)
-
+#    @pixel_test.test(100000)
 
 
 
@@ -460,6 +464,8 @@ class PuzzleView
 
     @puzzle = puzzle_app
 
+    @puzzle_xy = [100,30]
+
     @backgrounds = ["#cc5050","#80cc50","#50b4cc",
                     "#b450cc","#cc8050","#50cc50",
                     "#5080cc","#cc50b4","#ccb450",
@@ -471,7 +477,7 @@ class PuzzleView
 
     @context = @get_drawing_context("canvas")
     @img = document.getElementById("photo")
-    @context.drawImage(@img,100,30)
+    @context.drawImage(@img,@puzzle_xy[0],@puzzle_xy[1])
 
 
   get_drawing_context: (mode) ->
@@ -535,6 +541,140 @@ class PuzzleGridModel
 
 
 class HexDraw
+
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+    @puzzle_view = @puzzle.puzzle_view
+
+    @mode = null
+    @context = null
+    @colors = ["#cc5050","#5050cc","#50cccc","#50cc50","#cccc50","#cc50cc","#000000"]
+
+
+  set_context: (mode) ->
+    @mode = mode
+    @context = @puzzle_view.get_drawing_context(mode)
+
+
+  fill_hex_ab: (a,b,c_no) ->
+    x = 113+a*14
+    y = 27+b*20
+    y = y-9 if (a%2 == 0)
+    @fill_hex_xy(x,y,c_no)
+
+
+  fill_hex_xy: (x,y,c_no) ->
+    @context.fillStyle = @colors[c_no]
+    @context.beginPath()
+    @context.moveTo(x,y)
+    @context.lineTo(x+10,y)
+    @context.lineTo(x+15,y+11)
+    @context.lineTo(x+10,y+20)
+    @context.lineTo(x-1,y+20)
+    @context.lineTo(x-6,y+10)
+    @context.lineTo(x,y)
+    @context.fill()
+    @context.closePath()
+
+
+  draw_all_hexes: () -> # [test/diagnostic method]
+    @set_context("canvas")
+    for row in [1..10]
+      for col in [1..24]
+        if row%2 == 0
+          if col%2 == 0
+            c = 1
+          else
+            c = 2
+        else
+          if col%2 == 0
+            c = 3
+          else
+            c = 4
+        @fill_hex_ab(col,row,c) unless (row==10 && col%2==1)
+
+
+
+class HexBox
+
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+    @hexes = []
+    @box_xy = [null,null]
+    @corner_fit = "unknown"
+
+
+  get_box_metrics: () ->
+
+    @init_box_params()
+    for hx in @hexes
+      aa = hx[0]
+      b2 = 2*hx[1] + aa%2 - 1
+      @test_left_right_top_bottom(aa,b2)
+    if aa%2 == 1
+      first_column = "odd"
+    else
+      first_column = "even"
+
+
+
+  test_left_right_top_bottom: () ->
+    @left = aa if aa < @left
+    @right = aa if aa > @right
+    @top = b2 if b2 < @top
+    @bottom = b2 if b2 > @bottom
+
+#      left = aa if aa < left
+#      right = aa if aa > right
+#      if b < top
+#        top = b
+#        hx_top = bb
+#        high_hex_col = aa
+#      if b > bottom
+#        bottom = b
+#        hx_bottom = bb
+#        low_hex_col = aa
+
+
+  init_box_params: () ->
+    @left = 25
+    @right = 0
+    @top = 20
+    @bottom = 0
+
+#    hx_top = 12
+#    hx_bottom = 0
+#    high_hex_col = null
+#    low_hex_col = null
+#    @high_hex_adjust = false
+
+
+  add_hexes: (hex_collection) ->
+    @hexes = hex_collection
+
+
+  get_hexes: (piece_symbol) -> # TODO Leave this here or just reference the version in PuzzlePiece? 
+    hexes = []
+    for bb in [1..10]
+      for aa in [1..24]
+        hexes.push([aa,bb]) if @puzzle.pattern.grid[bb][aa] == piece_symbol
+    console.log("PIECE ID: "+piece_symbol)
+    console.log("    "+hx[0]+","+hx[1]) for hx in hexes
+    return hexes
+
+
+
+class HexGrid extends HexBox
+
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+    @corner_fit = "box-odd"
+    @box_xy = @puzzle.puzzle_view.puzzle_xy
+    alert("HexGrid x,y = "+@box_xy[0]+","+@box_xy[1])
+
+
+
+class HexDrawB
 
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app

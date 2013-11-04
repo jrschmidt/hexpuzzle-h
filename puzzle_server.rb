@@ -9,6 +9,8 @@ require 'pry'
 
 set :server, %w[webrick thin mongrel]
 
+set :port, 4566
+
 
 get '/' do
   erb :index
