@@ -20,7 +20,7 @@ class PuzzleApp
 
 #    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
 
-    @hex_box.get_hexes("e")
+    @hex_box.set_hex_box("f")
 
     @hex_draw.draw_all_hexes()
 
@@ -604,6 +604,11 @@ class HexBox
     @corner_fit = "unknown"
 
 
+  set_hex_box: (piece_symbol) ->
+    @reset_hexes(@get_hexes(piece_symbol))
+    @get_box_metrics()
+
+
   get_box_metrics: () ->
 
     @init_box_params()
@@ -611,14 +616,21 @@ class HexBox
       aa = hx[0]
       b2 = 2*hx[1] + aa%2 - 1
       @test_left_right_top_bottom(aa,b2)
-    if aa%2 == 1
-      first_column = "odd"
+    if @left%2 == 1
+      @first_column = "odd"
     else
-      first_column = "even"
+      @first_column = "even"
+
+    console.log("HexBox: left = "+@left)
+    console.log("HexBox: right = "+@right)
+    console.log("HexBox: top = "+@top)
+    console.log("HexBox: bottom = "+@bottom)
+#    console.log("HexBox: ")
+    console.log("HexBox: first column = "+@first_column)
+#    console.log("HexBox: ")
 
 
-
-  test_left_right_top_bottom: () ->
+  test_left_right_top_bottom: (aa,b2) ->
     @left = aa if aa < @left
     @right = aa if aa > @right
     @top = b2 if b2 < @top
@@ -649,7 +661,7 @@ class HexBox
 #    @high_hex_adjust = false
 
 
-  add_hexes: (hex_collection) ->
+  reset_hexes: (hex_collection) ->
     @hexes = hex_collection
 
 
@@ -670,7 +682,6 @@ class HexGrid extends HexBox
     @puzzle = puzzle_app
     @corner_fit = "box-odd"
     @box_xy = @puzzle.puzzle_view.puzzle_xy
-    alert("HexGrid x,y = "+@box_xy[0]+","+@box_xy[1])
 
 
 
