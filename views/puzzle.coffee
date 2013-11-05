@@ -15,18 +15,18 @@ class PuzzleApp
     @piece = new PuzzlePiece(this)
 
 #    @pattern.draw_pattern()
-    @piece.construct_piece("h")
+    @piece.construct_piece("i")
     @piece.draw_piece(0,0)
 
 #    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
 
-    @hex_box.set_hex_box("h")
+    @hex_box.set_hex_box("i")
 
     @hex_draw.draw_all_hexes()
 
-#    @pixel_test = new PixelHexTester(this)
-#    @pixel_test.mark_hex_centerpoints()
-#    @pixel_test.test(100000)
+    @pixel_test = new PixelHexTester(this)
+    @pixel_test.mark_hex_centerpoints()
+    @pixel_test.test(100000)
 
 
 
@@ -66,8 +66,6 @@ class PixelHexTester
 
   dot: (x,y) ->
     hex = @grid_model.get_hex(x,y)
-
-#    if hex[0] in [6,7,8] and hex[1] in [3,4,5]
     if hex[0] > 0 and hex[0] < 25 and hex[1] > 0 and hex[1] < 11
       color = @get_dot_color(hex)
       @put_dot(x,y,color)
@@ -78,7 +76,6 @@ class PixelHexTester
     context = canvas.getContext('2d')
     context.fillStyle = color
     context.fillRect(x,y,1,1)
-#    console.log(@color_name(color)+" dot at "+x+","+y)
 
 
   color_name: (cc) ->
@@ -545,9 +542,13 @@ class HexDraw
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @puzzle_view = @puzzle.puzzle_view
+    @hex_box = @puzzle.hex_box
 
     @mode = null
     @context = null
+
+    @dx = 108
+    @dy = 18
     @colors = ["#cc5050","#5050cc","#50cccc","#50cc50","#cccc50","#cc50cc","#000000"]
 
 
@@ -556,23 +557,28 @@ class HexDraw
     @context = @puzzle_view.get_drawing_context(mode)
 
 
-  fill_hex_ab: (a,b,c_no) ->
-    x = 113+a*14
-    y = 27+b*20
-    y = y-9 if (a%2 == 0)
-    @fill_hex_xy(x,y,c_no)
+  get_hex_xy: (a,b) -> # NEW
+    x = a*14 + @dx
+    y = (2*b + a%2)*10 + @dy
+    xy = [x,y]
+    return xy
 
 
-  fill_hex_xy: (x,y,c_no) ->
+  fill_hex_ab: (a,b,c_no) -> # REVISED
+    xy = @get_hex_xy(a,b)
+    @fill_hex_xy(xy[0],xy[1],c_no)
+
+
+  fill_hex_xy: (x,y,c_no) -> # REVISED
     @context.fillStyle = @colors[c_no]
     @context.beginPath()
-    @context.moveTo(x,y)
-    @context.lineTo(x+10,y)
-    @context.lineTo(x+15,y+11)
-    @context.lineTo(x+10,y+20)
-    @context.lineTo(x-1,y+20)
-    @context.lineTo(x-6,y+10)
-    @context.lineTo(x,y)
+    @context.moveTo(x+5,y)
+    @context.lineTo(x+15,y)
+    @context.lineTo(x+20,y+11)
+    @context.lineTo(x+15,y+20)
+    @context.lineTo(x+4,y+20)
+    @context.lineTo(x-1,y+10)
+    @context.lineTo(x+5,y)
     @context.fill()
     @context.closePath()
 
@@ -602,6 +608,7 @@ class HexBox
     @hexes = []
     @box_xy = [null,null]
     @corner_fit = "unknown"
+    @metrics_report = true
 
 
   set_hex_box: (piece_symbol) ->
@@ -617,7 +624,11 @@ class HexBox
       b2 = 2*hx[1] + aa%2 - 1
       @test_left_right_top_bottom(aa,b2)
     @get_corner_fit()
+    @get_box_xy()
+    @report_metrics() if @metrics_report == true
 
+
+  report_metrics: () ->
     console.log("HexBox: left = "+@left)
     console.log("HexBox: right = "+@right)
     console.log("HexBox: top = "+@top)
@@ -625,6 +636,10 @@ class HexBox
 #    console.log("HexBox: ")
     console.log("HexBox: corner fit = "+@corner_fit)
 #    console.log("HexBox: ")
+
+
+  get_box_xy: () ->
+    
 
 
   get_corner_fit: () ->
@@ -690,61 +705,6 @@ class HexGrid extends HexBox
     @puzzle = puzzle_app
     @corner_fit = "box-odd"
     @box_xy = @puzzle.puzzle_view.puzzle_xy
-
-
-
-class HexDrawB
-
-  constructor: (puzzle_app) ->
-    @puzzle = puzzle_app
-    @puzzle_view = @puzzle.puzzle_view
-
-    @mode = null
-    @context = null
-    @colors = ["#cc5050","#5050cc","#50cccc","#50cc50","#cccc50","#cc50cc","#000000"]
-
-
-  set_context: (mode) ->
-    @mode = mode
-    @context = @puzzle_view.get_drawing_context(mode)
-
-
-  fill_hex_ab: (a,b,c_no) ->
-    x = 113+a*14
-    y = 27+b*20
-    y = y-9 if (a%2 == 0)
-    @fill_hex_xy(x,y,c_no)
-
-
-  fill_hex_xy: (x,y,c_no) ->
-    @context.fillStyle = @colors[c_no]
-    @context.beginPath()
-    @context.moveTo(x,y)
-    @context.lineTo(x+10,y)
-    @context.lineTo(x+15,y+11)
-    @context.lineTo(x+10,y+20)
-    @context.lineTo(x-1,y+20)
-    @context.lineTo(x-6,y+10)
-    @context.lineTo(x,y)
-    @context.fill()
-    @context.closePath()
-
-
-  draw_all_hexes: () -> # [test/diagnostic method]
-    @set_context("canvas")
-    for row in [1..10]
-      for col in [1..24]
-        if row%2 == 0
-          if col%2 == 0
-            c = 1
-          else
-            c = 2
-        else
-          if col%2 == 0
-            c = 3
-          else
-            c = 4
-        @fill_hex_ab(col,row,c) unless (row==10 && col%2==1)
 
 
 
