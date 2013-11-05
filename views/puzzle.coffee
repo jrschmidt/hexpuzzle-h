@@ -14,19 +14,19 @@ class PuzzleApp
     @mask = new MissingPiecesMask(this)
     @piece = new PuzzlePiece(this)
 
-#    @pattern.draw_pattern()
-    @piece.construct_piece("i")
+    @pattern.draw_pattern()
+    @piece.construct_piece("c")
     @piece.draw_piece(0,0)
 
 #    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
 
-    @hex_box.set_hex_box("i")
+    @hex_box.set_hex_box("c")
 
-    @hex_draw.draw_all_hexes()
+#    @hex_draw.draw_all_hexes()
 
-    @pixel_test = new PixelHexTester(this)
-    @pixel_test.mark_hex_centerpoints()
-    @pixel_test.test(100000)
+#    @pixel_test = new PixelHexTester(this)
+#    @pixel_test.mark_hex_centerpoints()
+#    @pixel_test.test(100000)
 
 
 
@@ -601,7 +601,7 @@ class HexDraw
 
 
 
-class HexBox
+class HexBox # NEW CLASS
 
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
@@ -616,6 +616,10 @@ class HexBox
     @get_box_metrics()
 
 
+  reset_hexes: (hex_collection) ->
+    @hexes = hex_collection
+
+
   get_box_metrics: () ->
 
     @init_box_params()
@@ -624,6 +628,7 @@ class HexBox
       b2 = 2*hx[1] + aa%2 - 1
       @test_left_right_top_bottom(aa,b2)
     @get_corner_fit()
+    @get_anchor_hex()
     @get_box_xy()
     @report_metrics() if @metrics_report == true
 
@@ -635,11 +640,24 @@ class HexBox
     console.log("HexBox: bottom = "+@bottom)
 #    console.log("HexBox: ")
     console.log("HexBox: corner fit = "+@corner_fit)
+    console.log("HexBox: anchor hex ="+@anchor_hex)
+    console.log("HexBox: box XY ="+@box_xy[0]+","+@box_xy[1])
+#    console.log("HexBox: ")
 #    console.log("HexBox: ")
 
 
+  get_anchor_hex: () ->
+    aa = @left
+    bb = (@top + @top%2)/2
+    bb = bb + 1 if @left%2 == 0 && @corner_fit == "low"
+    @anchor_hex = [aa,bb]
+
+
   get_box_xy: () ->
-    
+    hx = @anchor_hex
+    xy = @puzzle.hex_draw.get_hex_xy(hx[0],hx[1])
+    xy[1] = xy[1] - 10 if @corner_fit == "low"
+    @box_xy = xy
 
 
   get_corner_fit: () ->
@@ -661,17 +679,6 @@ class HexBox
     @top = b2 if b2 < @top
     @bottom = b2 if b2 > @bottom
 
-#      left = aa if aa < left
-#      right = aa if aa > right
-#      if b < top
-#        top = b
-#        hx_top = bb
-#        high_hex_col = aa
-#      if b > bottom
-#        bottom = b
-#        hx_bottom = bb
-#        low_hex_col = aa
-
 
   init_box_params: () ->
     @left = 25
@@ -679,18 +686,8 @@ class HexBox
     @top = 20
     @bottom = 0
 
-#    hx_top = 12
-#    hx_bottom = 0
-#    high_hex_col = null
-#    low_hex_col = null
-#    @high_hex_adjust = false
 
-
-  reset_hexes: (hex_collection) ->
-    @hexes = hex_collection
-
-
-  get_hexes: (piece_symbol) -> # TODO Leave this here or just reference the version in PuzzlePiece? 
+  get_hexes: (piece_symbol) ->
     hexes = []
     for bb in [1..10]
       for aa in [1..24]
@@ -699,7 +696,7 @@ class HexBox
 
 
 
-class HexGrid extends HexBox
+class HexGrid extends HexBox # NEW CLASS
 
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
