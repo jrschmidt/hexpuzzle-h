@@ -10,17 +10,17 @@ class PuzzleApp
 
     @events = new EventHandler(this)
 
-    @pattern = new PuzzlePattern(this)
+    @puzzle_pattern = new PuzzlePattern(this)
     @mask = new MissingPiecesMask(this)
     @piece = new PuzzlePiece(this)
 
-    @pattern.draw_pattern()
-    @piece.construct_piece("c")
+    @puzzle_pattern.draw_pattern()
+    @piece.construct_piece("d")
     @piece.draw_piece(0,0)
 
-#    @piece.draw_piece_ab(@piece.box.anchor_hex[0],@piece.box.anchor_hex[1])
+    @piece.draw_piece_ab(@piece.hex_box.anchor_hex[0],@piece.hex_box.anchor_hex[1])
 
-    @hex_box.set_hex_box("c")
+#    @hex_box.set_hex_box("j")
 
 #    @hex_draw.draw_all_hexes()
 
@@ -173,8 +173,8 @@ class MissingPiecesMask
   constructor: (puzzle_app) ->
 
     @puzzle = puzzle_app
-    @pattern = @puzzle.pattern
-    @grid = @pattern.grid
+    @puzzle_pattern = @puzzle.puzzle_pattern
+    @grid = @puzzle_pattern.grid
     @hex_draw = @puzzle.hex_draw
     @missing = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
 
@@ -200,54 +200,65 @@ class PuzzlePiece
   constructor: (puzzle_app) ->
 
     @puzzle = puzzle_app
-    @hexes = []
-
-    @grid_model = @puzzle.grid_model
-
+    @hex_box = @puzzle.hex_box
     @box = new PieceRenderBox(this)
-    @p_mask  = new PiecePattern(this)
+    @piece_mask  = new PiecePattern(this)
     @redraw = new PieceRedrawBuffer
+    @hexes = []
 
 
   construct_piece: (sym) ->
     @sym = sym
     @hexes = @get_hexes()
+    @hex_box.set_hex_box(sym) # NEW
     @box.set_box_dimensions()
-    @p_mask.draw_pattern()
+    @piece_mask.draw_piece_pattern()
     @draw_piece(0,100)
     @cut_piece_from_photo()
+
 
   cut_piece_from_photo: () ->
 
     @photo_clip = document.createElement('canvas')
     @photo_clip.id = "photo-clip"
-    @photo_clip.width = @box.width
-    @photo_clip.height = @box.height
+    @photo_clip.width = @hex_box.width
+    @photo_clip.height = @hex_box.height
     @photo_clip_context = @photo_clip.getContext('2d')
-    @photo_clip_context.drawImage(@puzzle.puzzle_view.img,@box.box_xy[0],@box.box_xy[1],@box.width,@box.height,0,0,@box.width,@box.height)
+
+    xx = @hex_box.box_xy[0] - @puzzle.puzzle_view.puzzle_xy[0]
+    yy = @hex_box.box_xy[1] - @puzzle.puzzle_view.puzzle_xy[1]
+
+    @photo_clip_context.drawImage(@puzzle.puzzle_view.img,xx,yy,@hex_box.width,@hex_box.height,0,0,@hex_box.width,@hex_box.height)
 
     view_context = @puzzle.puzzle_view.context_canvas
     view_context.drawImage(@photo_clip,0,190)
 
-    context = @p_mask.piece_mask_context
+    context = @piece_mask.piece_mask_context
     context.globalCompositeOperation = 'source-atop'
     context.drawImage(@photo_clip,0,0)
     context.globalCompositeOperation = 'source-over'
 
 
-  draw_piece_ab: (a,b) ->
+  # TODO Let the revised method use a new HexBox method that gives x,y values
+  # for rendering a piece at any arbitrary a,b.
+  draw_piece_ab: (a,b) -> #FIXME Right now, this actually draws the piece at its own a,b location.
+    xy = @puzzle.hex_box.get_box_xy()
+    @draw_piece(xy[0],xy[1])
 
-    b = b-1 if a%2 == 0 and @box.anchor_hex[0] % 2 == 1
-    x = 107+a*14
-    y = 18+b*20
-    y = y+9 if @box.high_hex_adjust
-    y = y+9 if Math.abs(@box.anchor_hex[0] - a) % 2 == 1
-    @draw_piece(x,y)
+
+#  draw_piece_ab: (a,b) ->
+
+#    b = b-1 if a%2 == 0 and @box.anchor_hex[0] % 2 == 1
+#    x = 107+a*14
+#    y = 18+b*20
+#    y = y+9 if @box.high_hex_adjust
+#    y = y+9 if Math.abs(@box.anchor_hex[0] - a) % 2 == 1
+#    @draw_piece(x,y)
 
 
   draw_piece: (x,y) ->
     context = @puzzle.puzzle_view.context_canvas
-    context.drawImage(@p_mask.img,x,y)
+    context.drawImage(@piece_mask.img,x,y)
 
 
   # TODO Does this method belong in PuzzlePattern class?
@@ -255,7 +266,7 @@ class PuzzlePiece
     hexes = []
     for bb in [1..10]
       for aa in [1..24]
-        hexes.push([aa,bb]) if @puzzle.pattern.grid[bb][aa] == @sym
+        hexes.push([aa,bb]) if @puzzle.puzzle_pattern.grid[bb][aa] == @sym
     console.log("PIECE ID: "+@sym)
     console.log("    "+hx[0]+","+hx[1]) for hx in hexes
     hexes
@@ -278,18 +289,21 @@ class PiecePattern
 
   constructor: (piece) ->
     @piece = piece
-    @hex_draw = @piece.puzzle.hex_draw
+    @puzzle = @piece.puzzle
+    @hex_box = @puzzle.hex_box
+    @hex_draw = @puzzle.hex_draw
     @img = document.createElement('canvas')
     @img.id = "piece-mask"
     @piece_mask_context = @img.getContext('2d')
 
 
-  draw_pattern: () ->
-    @img.width = @piece.box.width
-    @img.height = @piece.box.height
+  draw_piece_pattern: () -> # TODO Fix this and the HexBox refactor is complete.
+    @img.width = @hex_box.width
+    @img.height = @hex_box.height
     @hexes = @piece.hexes
     @hex_draw.set_context("piece_mask")
     xx = 6
+    xx = 0
     if @piece.box.high_hex_adjust == true then hx_adjust = -9 else hx_adjust = 0
     for hx in @hexes
       aa = hx[0] - @piece.box.anchor_hex[0] + 1
@@ -306,7 +320,31 @@ class PiecePattern
       @fill_hex_ab_xy(aa,bb,xx,yy,3)
 
 
-  fill_hex_ab_xy: (a,b,x,y,c_no) ->
+###############################################################################
+#  draw_pattern: () -> # TODO Fix this and the HexBox refactor is complete.
+#    @img.width = @piece.box.width
+#    @img.height = @piece.box.height
+#    @hexes = @piece.hexes
+#    @hex_draw.set_context("piece_mask")
+#    xx = 6
+#    if @piece.box.high_hex_adjust == true then hx_adjust = -9 else hx_adjust = 0
+#    for hx in @hexes
+#      aa = hx[0] - @piece.box.anchor_hex[0] + 1
+#      bb = hx[1] - @piece.box.anchor_hex[1] + 1
+
+#      if @piece.box.anchor_hex[0] % 2 == 1
+#        yy = 9
+#      else
+#        if hx[0]%2 == 1
+#          yy = 18
+#        else
+#          yy = 0
+#      yy = yy + hx_adjust
+#      @fill_hex_ab_xy(aa,bb,xx,yy,3)
+###############################################################################
+
+
+  fill_hex_ab_xy: (a,b,x,y,c_no) -> # TODO Fix this and the HexBox refactor is complete.
     xx = x+(a-1)*14
     yy = y+(b-1)*20
     yy = yy-9 if (a%2 == 0)
@@ -368,6 +406,7 @@ class PieceRenderBox
   constructor: (piece) ->
 
     @piece = piece
+    @metrics_report = true
 
 
   set_box_dimensions: () ->
@@ -435,23 +474,24 @@ class PieceRenderBox
         console.log("Non-rendered anchor hex is out of bounds (higher than high hex).")
         @high_hex_adjust = true
 
-    console.log("PieceRenderBox:")
-    console.log("    top = "+top)
-    console.log("    anchor_top = "+anchor_top)
-    console.log("    high_hex_half_step = "+high_hex_half_step)
-    console.log("    bottom = "+bottom)
-    console.log("    left = "+left)
-    console.log("    right = "+right)
-    console.log("    center to anchor delta = "+@center_to_anchor_delta[0]+","+@center_to_anchor_delta[1])
-#    console.log("     = "+)
-#    console.log("     = "+)
-    console.log("    cols = "+cols)
-    console.log("    halves = "+halves)
-    console.log("    WIDTH = "+@width)
-    console.log("    HEIGHT = "+@height)
-    console.log("    BOX-XY = "+@box_xy[0]+","+@box_xy[1])
-    console.log("    HIGH HEX ADJUST = "+@high_hex_adjust)
-    console.log("    ANCHOR HEX = "+@anchor_hex[0]+","+@anchor_hex[1])
+    if @metrics_report == true
+      console.log("PieceRenderBox:")
+      console.log("    top = "+top)
+      console.log("    anchor_top = "+anchor_top)
+      console.log("    high_hex_half_step = "+high_hex_half_step)
+      console.log("    bottom = "+bottom)
+      console.log("    left = "+left)
+      console.log("    right = "+right)
+      console.log("    center to anchor delta = "+@center_to_anchor_delta[0]+","+@center_to_anchor_delta[1])
+  #    console.log("     = "+)
+  #    console.log("     = "+)
+      console.log("    cols = "+cols)
+      console.log("    halves = "+halves)
+      console.log("    WIDTH = "+@width)
+      console.log("    HEIGHT = "+@height)
+      console.log("    BOX-XY = "+@box_xy[0]+","+@box_xy[1])
+      console.log("    HIGH HEX ADJUST = "+@high_hex_adjust)
+      console.log("    ANCHOR HEX = "+@anchor_hex[0]+","+@anchor_hex[1])
 
 
 
@@ -482,7 +522,7 @@ class PuzzleView
       when "canvas" then context = @context_canvas
       when "piece_mask"
         if @puzzle.piece
-          context = @puzzle.piece.p_mask.img.getContext('2d')
+          context = @puzzle.piece.piece_mask.img.getContext('2d')
         else
           context = null
     return context
@@ -621,7 +661,6 @@ class HexBox # NEW CLASS
 
 
   get_box_metrics: () ->
-
     @init_box_params()
     for hx in @hexes
       aa = hx[0]
@@ -630,20 +669,13 @@ class HexBox # NEW CLASS
     @get_corner_fit()
     @get_anchor_hex()
     @get_box_xy()
+    @get_height_width()
     @report_metrics() if @metrics_report == true
 
 
-  report_metrics: () ->
-    console.log("HexBox: left = "+@left)
-    console.log("HexBox: right = "+@right)
-    console.log("HexBox: top = "+@top)
-    console.log("HexBox: bottom = "+@bottom)
-#    console.log("HexBox: ")
-    console.log("HexBox: corner fit = "+@corner_fit)
-    console.log("HexBox: anchor hex ="+@anchor_hex)
-    console.log("HexBox: box XY ="+@box_xy[0]+","+@box_xy[1])
-#    console.log("HexBox: ")
-#    console.log("HexBox: ")
+  get_height_width: () ->
+    @width = 14*(@right-@left+1) + 7
+    @height = 10*(@bottom-@top+2) + 1
 
 
   get_anchor_hex: () ->
@@ -691,8 +723,23 @@ class HexBox # NEW CLASS
     hexes = []
     for bb in [1..10]
       for aa in [1..24]
-        hexes.push([aa,bb]) if @puzzle.pattern.grid[bb][aa] == piece_symbol
+        hexes.push([aa,bb]) if @puzzle.puzzle_pattern.grid[bb][aa] == piece_symbol
     return hexes
+
+
+  report_metrics: () ->
+    console.log("HexBox: left = "+@left)
+    console.log("HexBox: right = "+@right)
+    console.log("HexBox: top = "+@top)
+    console.log("HexBox: bottom = "+@bottom)
+    console.log("HexBox: width = "+@width)
+    console.log("HexBox: height = "+@height)
+#    console.log("HexBox: ")
+    console.log("HexBox: corner fit = "+@corner_fit)
+    console.log("HexBox: anchor hex ="+@anchor_hex)
+    console.log("HexBox: box XY ="+@box_xy[0]+","+@box_xy[1])
+#    console.log("HexBox: ")
+#    console.log("HexBox: ")
 
 
 
