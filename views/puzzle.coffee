@@ -17,12 +17,12 @@ class PuzzleApp
 #    @puzzle_pattern.draw_pattern()
     @hex_draw.draw_all_hexes()
 
-    @piece.construct_piece("p")
+    @piece.construct_piece("e")
 
-    a = Math.floor(1+24*Math.random())
-    b = Math.floor(1+9*Math.random())
-    @piece.draw_piece_ab(a,b)
-    console.log("drawing piece at "+a+","+b)
+#    a = Math.floor(1+24*Math.random())
+#    b = Math.floor(1+9*Math.random())
+#    @piece.draw_piece_ab(a,b)
+#    console.log("drawing piece at "+a+","+b)
 
 #    @piece.draw_piece_ab(@piece.hex_box.anchor_hex[0],@piece.hex_box.anchor_hex[1])
 
@@ -121,6 +121,8 @@ class EventHandler
     console.log("mouse click: "+x+","+y)
     hex = @grid_model.get_hex(x,y)
     console.log("A*,B* ~= "+hex[0]+","+hex[1])
+    @puzzle.piece.draw_piece_ab(hex[0],hex[1]) if not (hex[0] == 0)
+#    @piece.draw_piece_ab(a,b)
 
 
 
@@ -246,9 +248,7 @@ class PuzzlePiece
     context.globalCompositeOperation = 'source-over'
 
 
-  # TODO Let the revised method use a new HexBox method that gives x,y values
-  # for rendering a piece at any arbitrary a,b.
-  draw_piece_ab: (a,b) -> #FIXME Right now, this actually draws the piece at its own a,b location.
+  draw_piece_ab: (a,b) ->
     xy = @puzzle.hex_box.get_box_xy_ab(a,b)
     @draw_piece(xy[0],xy[1])
 
