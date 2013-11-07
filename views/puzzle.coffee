@@ -121,7 +121,7 @@ class EventHandler
     console.log("mouse click: "+x+","+y)
     hex = @grid_model.get_hex(x,y)
     console.log("A*,B* ~= "+hex[0]+","+hex[1])
-    @puzzle.piece.draw_piece_ab(hex[0],hex[1]) if not (hex[0] == 0)
+    @puzzle.piece.draw_piece_ab(hex[0],hex[1]) if not (hex[0] == 0) # FIXME FIXME FIXME change not and == to !=
 #    @piece.draw_piece_ab(a,b)
 
 
@@ -209,7 +209,6 @@ class PuzzlePiece
 
     @puzzle = puzzle_app
     @hex_box = @puzzle.hex_box
-    @box = new PieceRenderBox(this)
     @piece_mask  = new PiecePattern(this)
     @redraw = new PieceRedrawBuffer
     @hexes = []
@@ -218,8 +217,7 @@ class PuzzlePiece
   construct_piece: (sym) ->
     @sym = sym
     @hexes = @get_hexes()
-    @hex_box.set_hex_box(sym) # NEW
-    @box.set_box_dimensions()
+    @hex_box.set_hex_box(sym)
     @piece_mask.draw_piece_pattern()
     @draw_piece(0,100)
     @cut_piece_from_photo()
@@ -253,16 +251,6 @@ class PuzzlePiece
     @draw_piece(xy[0],xy[1])
 
 
-#  draw_piece_ab: (a,b) ->
-
-#    b = b-1 if a%2 == 0 and @box.anchor_hex[0] % 2 == 1
-#    x = 107+a*14
-#    y = 18+b*20
-#    y = y+9 if @box.high_hex_adjust
-#    y = y+9 if Math.abs(@box.anchor_hex[0] - a) % 2 == 1
-#    @draw_piece(x,y)
-
-
   draw_piece: (x,y) ->
     context = @puzzle.puzzle_view.context_canvas
     context.drawImage(@piece_mask.img,x,y)
@@ -279,18 +267,6 @@ class PuzzlePiece
     hexes
 
 
-#  FIXME (Used by the deprecated redraw method)
-#  get_dim: () ->
-#    dim = [63,87] # (temporarily hard code these values)
-#    dim
-
-#  get_piece_xy_offset: () ->
-#    dx = -14 # (temporarily hard code these values)
-#    dy = 0
-#    dxy = [dx,dy]
-#    dxy
-
-
 
 class PiecePattern
 
@@ -304,66 +280,30 @@ class PiecePattern
     @piece_mask_context = @img.getContext('2d')
 
 
-  draw_piece_pattern: () -> # TODO Fix this and the HexBox refactor is complete.
+  draw_piece_pattern: () ->
     @img.width = @hex_box.width
     @img.height = @hex_box.height
     @hexes = @piece.hexes
     @hex_draw.set_context("piece_mask")
+    anchor_a = @hex_box.anchor_hex[0]
+    anchor_b = @hex_box.anchor_hex[1]
+    anchor_x = 0
+    if @hex_box.corner_fit == "high" then anchor_y = 0 else anchor_y = 10
 
-
-
-
-
-    xx = 6
-    xx = 0
-    if @piece.box.high_hex_adjust == true then hx_adjust = -9 else hx_adjust = 0
     for hx in @hexes
-      aa = hx[0] - @piece.box.anchor_hex[0] + 1
-      bb = hx[1] - @piece.box.anchor_hex[1] + 1
+      aa = hx[0]
+      bb = hx[1]
+      xx = (aa - anchor_a) * 14
+      yy = anchor_y + (bb - anchor_b) * 20
+      if aa%2 != anchor_a%2
+        if anchor_a%2 == 0 then yy = yy+10 else yy = yy-10
+      @hex_draw.fill_hex_xy(xx,yy,3)
 
-      if @piece.box.anchor_hex[0] % 2 == 1
-        yy = 9
-      else
-        if hx[0]%2 == 1
-          yy = 18
-        else
-          yy = 0
-      yy = yy + hx_adjust
-      @fill_hex_ab_xy(aa,bb,xx,yy,3)
 
 
 ###############################################################################
-#  draw_pattern: () -> # TODO Fix this and the HexBox refactor is complete.
-#    @img.width = @piece.box.width
-#    @img.height = @piece.box.height
-#    @hexes = @piece.hexes
-#    @hex_draw.set_context("piece_mask")
-#    xx = 6
-#    if @piece.box.high_hex_adjust == true then hx_adjust = -9 else hx_adjust = 0
-#    for hx in @hexes
-#      aa = hx[0] - @piece.box.anchor_hex[0] + 1
-#      bb = hx[1] - @piece.box.anchor_hex[1] + 1
-
-#      if @piece.box.anchor_hex[0] % 2 == 1
-#        yy = 9
-#      else
-#        if hx[0]%2 == 1
-#          yy = 18
-#        else
-#          yy = 0
-#      yy = yy + hx_adjust
-#      @fill_hex_ab_xy(aa,bb,xx,yy,3)
-###############################################################################
-
-
-  fill_hex_ab_xy: (a,b,x,y,c_no) -> # TODO Fix this and the HexBox refactor is complete.
-    xx = x+(a-1)*14
-    yy = y+(b-1)*20
-    yy = yy-9 if (a%2 == 0)
-    @hex_draw.fill_hex_xy(xx,yy,c_no)
-
-
-## FIXME Saving this method from a discontinued class as an example because the redraw works correctly.
+## FIXME Saving this method from a discontinued class
+#       as an example because the redraw works correctly.
 #  draw_piece:  (a,b) ->
 #    @pc_img = document.getElementById("piece")
 #    if @grid_model.in_range(a,b)
@@ -381,6 +321,7 @@ class PiecePattern
 #      @context.drawImage(@pc_img,xx,yy)
 #    else
 #      @context.drawImage(@pc_img,0,100)
+###############################################################################
 
 
 
@@ -567,6 +508,8 @@ class PuzzleGridModel
     console.log("x,y offset (unadjusted) "+a1+","+b1+" to "+a2+","+b2+" = "+dx+","+dy)
 
 
+    # TODO It seems this is currently the only method in this class being used.
+    #      What is the future of this class?
   get_hex: (x,y) ->
     hex = [0,0]
     in_bounds = true
@@ -617,19 +560,19 @@ class HexDraw
     @context = @puzzle_view.get_drawing_context(mode)
 
 
-  get_hex_xy: (a,b) -> # NEW
+  get_hex_xy: (a,b) ->
     x = a*14 + @dx
     y = (2*b + a%2)*10 + @dy
     xy = [x,y]
     return xy
 
 
-  fill_hex_ab: (a,b,c_no) -> # REVISED
+  fill_hex_ab: (a,b,c_no) ->
     xy = @get_hex_xy(a,b)
     @fill_hex_xy(xy[0],xy[1],c_no)
 
 
-  fill_hex_xy: (x,y,c_no) -> # REVISED
+  fill_hex_xy: (x,y,c_no) ->
     @context.fillStyle = @colors[c_no]
     @context.beginPath()
     @context.moveTo(x+5,y)
@@ -661,7 +604,7 @@ class HexDraw
 
 
 
-class HexBox # NEW CLASS
+class HexBox
 
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
@@ -766,7 +709,7 @@ class HexBox # NEW CLASS
 
 
 
-class HexGrid extends HexBox # NEW CLASS
+class HexGrid extends HexBox
 
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
