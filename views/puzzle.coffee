@@ -14,15 +14,21 @@ class PuzzleApp
     @mask = new MissingPiecesMask(this)
     @piece = new PuzzlePiece(this)
 
-    @puzzle_pattern.draw_pattern()
-    @piece.construct_piece("d")
-    @piece.draw_piece(0,0)
+#    @puzzle_pattern.draw_pattern()
+    @hex_draw.draw_all_hexes()
 
-    @piece.draw_piece_ab(@piece.hex_box.anchor_hex[0],@piece.hex_box.anchor_hex[1])
+    @piece.construct_piece("p")
+
+    a = Math.floor(1+24*Math.random())
+    b = Math.floor(1+9*Math.random())
+    @piece.draw_piece_ab(a,b)
+    console.log("drawing piece at "+a+","+b)
+
+#    @piece.draw_piece_ab(@piece.hex_box.anchor_hex[0],@piece.hex_box.anchor_hex[1])
+
+#    @grid_model.get_offset(13,1,19,5)
 
 #    @hex_box.set_hex_box("j")
-
-#    @hex_draw.draw_all_hexes()
 
 #    @pixel_test = new PixelHexTester(this)
 #    @pixel_test.mark_hex_centerpoints()
@@ -215,6 +221,7 @@ class PuzzlePiece
     @piece_mask.draw_piece_pattern()
     @draw_piece(0,100)
     @cut_piece_from_photo()
+    @draw_piece(0,0)
 
 
   cut_piece_from_photo: () ->
@@ -242,7 +249,7 @@ class PuzzlePiece
   # TODO Let the revised method use a new HexBox method that gives x,y values
   # for rendering a piece at any arbitrary a,b.
   draw_piece_ab: (a,b) -> #FIXME Right now, this actually draws the piece at its own a,b location.
-    xy = @puzzle.hex_box.get_box_xy()
+    xy = @puzzle.hex_box.get_box_xy_ab(a,b)
     @draw_piece(xy[0],xy[1])
 
 
@@ -302,6 +309,11 @@ class PiecePattern
     @img.height = @hex_box.height
     @hexes = @piece.hexes
     @hex_draw.set_context("piece_mask")
+
+
+
+
+
     xx = 6
     xx = 0
     if @piece.box.high_hex_adjust == true then hx_adjust = -9 else hx_adjust = 0
@@ -406,7 +418,7 @@ class PieceRenderBox
   constructor: (piece) ->
 
     @piece = piece
-    @metrics_report = true
+    @metrics_report = false
 
 
   set_box_dimensions: () ->
@@ -471,7 +483,7 @@ class PieceRenderBox
         anchor_in_hexes = true if hx[0] == ax and hx[1] == ay
 
       if (not anchor_in_hexes) and (high_hex_col - a) % 2 == 1 and anchor_top < top
-        console.log("Non-rendered anchor hex is out of bounds (higher than high hex).")
+        console.log("Non-rendered anchor hex is out of bounds (higher than high hex).") if @metrics_report == true
         @high_hex_adjust = true
 
     if @metrics_report == true
@@ -545,6 +557,14 @@ class PuzzleGridModel
     else
       xy = [0,0]
     return xy
+
+
+  get_offset: (a1,b1,a2,b2) ->
+    da = a2 - a1
+    db = b2 - b1
+    dx = da*14
+    dy = db*20
+    console.log("x,y offset (unadjusted) "+a1+","+b1+" to "+a2+","+b2+" = "+dx+","+dy)
 
 
   get_hex: (x,y) ->
@@ -686,10 +706,13 @@ class HexBox # NEW CLASS
 
 
   get_box_xy: () ->
-    hx = @anchor_hex
-    xy = @puzzle.hex_draw.get_hex_xy(hx[0],hx[1])
+    @box_xy = @get_box_xy_ab(@anchor_hex[0],@anchor_hex[1])
+
+
+  get_box_xy_ab: (a,b) ->
+    xy = @puzzle.hex_draw.get_hex_xy(a,b)
     xy[1] = xy[1] - 10 if @corner_fit == "low"
-    @box_xy = xy
+    return xy
 
 
   get_corner_fit: () ->
