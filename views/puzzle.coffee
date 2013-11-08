@@ -15,23 +15,14 @@ class PuzzleApp
     @piece = new PuzzlePiece(this)
 
 #    @puzzle_pattern.draw_pattern()
-    @hex_draw.draw_all_hexes()
+#    @hex_draw.draw_all_hexes()
+    @hex_draw.fill_all_hexes()
 
-    @piece.construct_piece("e")
-
-#    a = Math.floor(1+24*Math.random())
-#    b = Math.floor(1+9*Math.random())
-#    @piece.draw_piece_ab(a,b)
-#    console.log("drawing piece at "+a+","+b)
-
-#    @piece.draw_piece_ab(@piece.hex_box.anchor_hex[0],@piece.hex_box.anchor_hex[1])
-
-#    @grid_model.get_offset(13,1,19,5)
-
-#    @hex_box.set_hex_box("j")
+    pieces = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
+    pc = Math.floor(16*Math.random())
+    @piece.construct_piece(pieces[pc])
 
 #    @pixel_test = new PixelHexTester(this)
-#    @pixel_test.mark_hex_centerpoints()
 #    @pixel_test.test(100000)
 
 
@@ -41,6 +32,8 @@ class EventHandler
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @grid_model = @puzzle.grid_model
+
+    @piece_drag = new PieceDrag(@puzzle)
 
 
   click_handle: (e) ->
@@ -53,9 +46,34 @@ class EventHandler
     y = py-dy
 
     console.log("mouse click: "+x+","+y)
-    hex = @grid_model.get_hex(x,y)
+    hex = @piece_drag.get_piece_hex_position(x,y)
     console.log("A*,B* ~= "+hex[0]+","+hex[1])
+      # TODO We must change the hx[0]!=0 test to something
+      # else when we implement negative a,b values.
     @puzzle.piece.draw_piece_ab(hex[0],hex[1]) if hex[0] != 0
+
+
+
+class PieceDrag
+
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+    @hex_box = @puzzle.hex_box
+    @grid_model = @puzzle.grid_model
+
+
+  get_piece_hex_position: (x,y) ->
+    dxdy = @get_piece_offset()
+    hex = @grid_model.get_hex(x-dxdy[0],y-dxdy[1])
+    return hex
+
+
+  get_piece_offset: () ->
+    wd_ht = @hex_box.get_box_size()
+    dx = Math.floor(wd_ht[0]/2) - 10
+    dy = Math.floor(wd_ht[1]/2) - 10
+    console.log("piece center to anchor hex offset = "+dx+","+dy)
+    return [dx,dy]
 
 
 
@@ -119,15 +137,6 @@ class MissingPiecesMask
     @hex_draw = @puzzle.hex_draw
     @missing = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
 
-    # ------[(temp) test data generator]------
-    take = Math.floor(24*Math.random())
-    for i in [1..take]
-      next = Math.floor(24*Math.random())
-      delete @missing[next]
-    # ------[(temp) test data generator]------
-
-#    @draw_mask()
-
 
   draw_mask: () ->
     @hex_draw.set_context("canvas")
@@ -155,9 +164,9 @@ class PuzzlePiece
     @redraw.reset_size(wd_ht[0],wd_ht[1])
 
     @piece_mask.draw_piece_pattern()
-    @draw_piece(0,100)
-    @cut_piece_from_photo()
     @draw_piece(0,0)
+    @cut_piece_from_photo()
+    @draw_piece(0,100)
 
 
   cut_piece_from_photo: () ->
@@ -183,7 +192,6 @@ class PuzzlePiece
 
 
   draw_piece_ab: (a,b) ->
-    console.log("PuzzlePiece.draw_piece_ab()")
     xy = @puzzle.hex_box.get_box_xy_ab(a,b)
     @redraw.apply_redraw()
     @redraw.prepare_next_redraw(xy[0],xy[1])
@@ -261,22 +269,15 @@ class PieceRedrawBuffer
     @redraw_image.height = @height
 
 
-# FIXME The 'object not usable' error is probably because we aren't setting
-#        the height and width for the redraw image object. Second possibility
-#        is a draw context snag in @view.context.
   apply_redraw: () ->
     if @redraw_active
-      console.log("PieceRedrawBuffer.apply_redraw()")
       canvas = document.getElementById("puzzle-widget")
       context = canvas.getContext('2d')
       context.drawImage(@redraw_image,@redraw_x,@redraw_y)
       @view.clear_margins()
 
-#      @view.draw_image(@redraw,@redraw_x,@redraw_y) if @redraw_active
-
 
   prepare_next_redraw: (x,y) ->
-    console.log("PieceRedrawBuffer.prepare_next_redraw()")
     ctx = @redraw_image.getContext('2d')
     ctx.clearRect(0,0,@width,@height)
     ctx.drawImage(@view.canvas,x,y,@width,@height,0,0,@width,@height)
@@ -297,11 +298,11 @@ class PuzzleView
     @bottom_margin = [100,246,420,34]
     @right_margin = [484,0,36,246]
 
-    @backgrounds = ["#cc5050","#80cc50","#50b4cc",
-                    "#b450cc","#cc8050","#50cc50",
-                    "#5080cc","#cc50b4","#ccb450",
-                    "#50cc80","#5050cc","#cc5080",
-                    "#b4cc50","#50ccb4","#8050cc"]
+    @backgrounds = ["#cc9999","#adcc99","#99c2cc",
+                    "#c299cc","#ccad99","#99cc99",
+                    "#99adcc","#cc99c2","#ccc299",
+                    "#99ccad","#9999cc","#cc99ad",
+                    "#c2cc99","#99ccc2","#ad99cc"]
 
     @canvas = document.getElementById("puzzle-widget")
     @context_canvas = @canvas.getContext('2d')
@@ -332,38 +333,13 @@ class PuzzleView
 
 class PuzzleGridModel
 
-  constructor: () ->
-      # When adjusting pixel-to-hex x,y alignments, make the changes on these
-      # constants, not in the methods.
-      @t_dx = 8
-      @t_dy = -13
-
-
-  get_xy: (a,b) -> 
-    if @in_range(a,b)
-      x = 100 + 14*a + (a%2)/2 + @t_dx
-      y = 30 + 20*b + (a%2)*10 + @t_dy
-      xy = [x,y]
-    else
-      xy = [0,0]
-    return xy
-
-
-  get_offset: (a1,b1,a2,b2) ->
-    da = a2 - a1
-    db = b2 - b1
-    dx = da*14
-    dy = db*20
-    console.log("x,y offset (unadjusted) "+a1+","+b1+" to "+a2+","+b2+" = "+dx+","+dy)
-
-
-    # TODO It seems this is currently the only method in this class being used.
-    #      What is the future of this class?
+    # TODO Since this is the only method left in this class,
+    #      what is the future of this class?
   get_hex: (x,y) ->
     hex = [0,0]
     in_bounds = true
-    aa = Math.floor((x-4-@t_dx)/14)-7
-    bb = Math.floor((y-9*(aa%2)-10.5-@t_dy)/20)-1
+    aa = Math.floor((x-12)/14)-7
+    bb = Math.floor((y-9*(aa%2)+2.5)/20)-1
     in_bounds = false if @in_range(aa,bb) == false
 
     corner = @get_xy(aa,bb)
@@ -376,6 +352,16 @@ class PuzzleGridModel
 
     hex = [aa,bb] if (in_bounds == true)
     return hex
+
+
+  get_xy: (a,b) -> 
+    if @in_range(a,b)
+      x = 100 + 14*a + (a%2)/2 + @t_dx
+      y = 30 + 20*b + (a%2)*10 + @t_dy
+      xy = [x,y]
+    else
+      xy = [0,0]
+    return xy
 
 
   in_range: (a,b) ->
@@ -450,6 +436,13 @@ class HexDraw
           else
             c = 4
         @fill_hex_ab(col,row,c) unless (row==10 && col%2==1)
+
+
+  fill_all_hexes: () -> # [test/diagnostic method]
+    @set_context("canvas")
+    for row in [1..10]
+      for col in [1..24]
+        @fill_hex_ab(col,row,4) unless (row==10 && col%2==1)
 
 
 
@@ -553,12 +546,9 @@ class HexBox
     console.log("HexBox: bottom = "+@bottom)
     console.log("HexBox: width = "+@width)
     console.log("HexBox: height = "+@height)
-#    console.log("HexBox: ")
     console.log("HexBox: corner fit = "+@corner_fit)
     console.log("HexBox: anchor hex ="+@anchor_hex)
     console.log("HexBox: box XY ="+@box_xy[0]+","+@box_xy[1])
-#    console.log("HexBox: ")
-#    console.log("HexBox: ")
 
 
 
@@ -606,7 +596,8 @@ class PixelHexTester
 
 
   dot: (x,y) ->
-    hex = @grid_model.get_hex(x,y)
+    hex = @puzzle.events.piece_drag.get_piece_hex_position(x,y)
+#    hex = @grid_model.get_hex(x,y)
     if hex[0] > 0 and hex[0] < 25 and hex[1] > 0 and hex[1] < 11
       color = @get_dot_color(hex)
       @put_dot(x,y,color)
