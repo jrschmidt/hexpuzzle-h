@@ -36,72 +36,6 @@ class PuzzleApp
 
 
 
-class PixelHexTester
-
-
-  constructor: (puzzle_app) ->
-    @puzzle = puzzle_app
-    @grid_model = @puzzle.grid_model
-    @xx = 120
-    @yy = 30
-    @wd = 350
-    @ht = 220
-
-
-  test: (n) ->
-    for k in [0..n]
-      @pixel_test()
-
-
-  pixel_test: () ->
-    x = @xx + Math.floor(@wd*Math.random())
-    y = @yy + Math.floor(@ht*Math.random())
-    @dot(x,y)
-
-
-  mark_hex_centerpoints: () ->
-    for aa in [1..24]
-      for bb in [1..10]
-        if not (aa%2 == 1 and bb == 10)
-          corner = @grid_model.get_xy(aa,bb)
-          @put_dot(corner[0],corner[1],"#666666")
-          ctr_x = corner[0]+9
-          ctr_y = corner[1]+10
-          @put_dot(ctr_x,ctr_y,"#ff0000")
-
-
-  dot: (x,y) ->
-    hex = @grid_model.get_hex(x,y)
-    if hex[0] > 0 and hex[0] < 25 and hex[1] > 0 and hex[1] < 11
-      color = @get_dot_color(hex)
-      @put_dot(x,y,color)
-
-
-  put_dot: (x,y,color) ->
-    canvas = document.getElementById("puzzle-widget")
-    context = canvas.getContext('2d')
-    context.fillStyle = color
-    context.fillRect(x,y,1,1)
-
-
-  color_name: (cc) ->
-    cc = "   red" if cc == "#ff0000"
-    cc = " green" if cc == "#00ff00"
-    cc = "yellow" if cc == "#ffff00"
-    cc
-
-
-  get_dot_color: (hex) ->
-    color = "#00ff00" if hex[0] % 2 == 0 and hex[1] % 3 == 0
-    color = "#ff0000" if hex[0] % 2 == 0 and hex[1] % 3 == 1
-    color = "#ffff00" if hex[0] % 2 == 0 and hex[1] % 3 == 2
-    color = "#ffff00" if hex[0] % 2 == 1 and hex[1] % 3 == 0
-    color = "#00ff00" if hex[0] % 2 == 1 and hex[1] % 3 == 1
-    color = "#ff0000" if hex[0] % 2 == 1 and hex[1] % 3 == 2
-    color
-
-
-
 class EventHandler
 
   constructor: (puzzle_app) ->
@@ -121,8 +55,7 @@ class EventHandler
     console.log("mouse click: "+x+","+y)
     hex = @grid_model.get_hex(x,y)
     console.log("A*,B* ~= "+hex[0]+","+hex[1])
-    @puzzle.piece.draw_piece_ab(hex[0],hex[1]) if not (hex[0] == 0) # FIXME FIXME FIXME change not and == to !=
-#    @piece.draw_piece_ab(a,b)
+    @puzzle.piece.draw_piece_ab(hex[0],hex[1]) if hex[0] != 0
 
 
 
@@ -210,7 +143,7 @@ class PuzzlePiece
     @puzzle = puzzle_app
     @hex_box = @puzzle.hex_box
     @piece_mask  = new PiecePattern(this)
-    @redraw = new PieceRedrawBuffer
+    @redraw = new PieceRedrawBuffer(this)
     @hexes = []
 
 
@@ -218,6 +151,9 @@ class PuzzlePiece
     @sym = sym
     @hexes = @get_hexes()
     @hex_box.set_hex_box(sym)
+    wd_ht = @hex_box.get_box_size()
+    @redraw.reset_size(wd_ht[0],wd_ht[1])
+
     @piece_mask.draw_piece_pattern()
     @draw_piece(0,100)
     @cut_piece_from_photo()
@@ -247,7 +183,10 @@ class PuzzlePiece
 
 
   draw_piece_ab: (a,b) ->
+    console.log("PuzzlePiece.draw_piece_ab()")
     xy = @puzzle.hex_box.get_box_xy_ab(a,b)
+    @redraw.apply_redraw()
+    @redraw.prepare_next_redraw(xy[0],xy[1])
     @draw_piece(xy[0],xy[1])
 
 
@@ -301,150 +240,49 @@ class PiecePattern
 
 
 
-###############################################################################
-## FIXME Saving this method from a discontinued class
-#       as an example because the redraw works correctly.
-#  draw_piece:  (a,b) ->
-#    @pc_img = document.getElementById("piece")
-#    if @grid_model.in_range(a,b)
-#      xy = @grid_model.get_xy(a,b)
-#      xx = xy[0]+@dx
-#      yy = xy[1]+@dy
-
-#      @context.drawImage(@redraw,@redraw_x,@redraw_y) if @redraw_active
-#      ctx = @redraw.getContext('2d')
-#      ctx.drawImage(@canvas,xx,yy,@width,@height,0,0,@width,@height)
-#      @redraw_active = true
-#      @redraw_x = xx
-#      @redraw_y =yy
-
-#      @context.drawImage(@pc_img,xx,yy)
-#    else
-#      @context.drawImage(@pc_img,0,100)
-###############################################################################
-
-
-
 class PieceRedrawBuffer
-# TODO Set a height delta of 10px if anchor hex column is odd?
 
-  constructor: () ->
-    @redraw = document.createElement('canvas')
+  constructor: (piece) ->
+    @piece = piece
+    @puzzle = @piece.puzzle
+    @view = @puzzle.puzzle_view
 
-    @redraw.width = @width
-    @redraw.height = @height
-
+    @redraw_image = document.createElement('canvas')
+    @redraw_image.width = 30
+    @redraw_image.height = 30
     @redraw_x = 0
     @redraw_y = 0
     @redraw_active = false
 
   reset_size: (x,y) ->
-    # TODO this resets the w&h for this object but not for @redraw
     @width = x
     @height = y
-
-#    @dim = @get_dim()
-#    @width = @dim[0]
-#    @height = @dim[1]
-#    @redraw.reset_size(@width,@height)
-
-#    dxy = @get_piece_xy_offset()
-#    @dx = dxy[0]
-#    @dy = dxy[1]
+    @redraw_image.width = @width
+    @redraw_image.height = @height
 
 
+# FIXME The 'object not usable' error is probably because we aren't setting
+#        the height and width for the redraw image object. Second possibility
+#        is a draw context snag in @view.context.
+  apply_redraw: () ->
+    if @redraw_active
+      console.log("PieceRedrawBuffer.apply_redraw()")
+      canvas = document.getElementById("puzzle-widget")
+      context = canvas.getContext('2d')
+      context.drawImage(@redraw_image,@redraw_x,@redraw_y)
+      @view.clear_margins()
 
-class PieceRenderBox
-
-  constructor: (piece) ->
-
-    @piece = piece
-    @metrics_report = false
-
-
-  set_box_dimensions: () ->
-
-    left = 30
-    right = 0
-    top = 100
-    bottom = 0
-    hx_top = 12
-    hx_bottom = 0
-    high_hex_col = null
-    low_hex_col = null
-    @high_hex_adjust = false
-
-    @hexes = @piece.hexes
-    for hx in @hexes
-      aa = hx[0]
-      bb = hx[1]
-      b = 5 + 10*(bb-1) + 5*(aa%2)
-      left = aa if aa < left
-      right = aa if aa > right
-      if b < top
-        top = b
-        hx_top = bb
-        high_hex_col = aa
-      if b > bottom
-        bottom = b
-        hx_bottom = bb
-        low_hex_col = aa
-
-    @anchor_hex = [left,hx_top]
-    anchor_top = 5 + 10*(hx_top-1) + 5*(left%2)
-
-    cols = right - left + 1
-    halves = (bottom - top)/5 + 2
-    @width = 6 + cols*14
-    @height = halves*10
-
-    a = @anchor_hex[0]
-    b = @anchor_hex[1]
-    if anchor_top > top
-      high_hex_half_step = true
-    else
-      high_hex_half_step = false
-    
-    x = a*14+7
-    y = b*20-12
-    @box_xy = [x,y]
-
-    ca_x = 10
-    if high_hex_half_step then ca_y = 19 else ca_y = 9
-    @center_to_anchor_delta = [ca_x,ca_y]
+#      @view.draw_image(@redraw,@redraw_x,@redraw_y) if @redraw_active
 
 
-    if halves % 2 == 1
-      if (high_hex_col - a) % 2 == 0 and a%2 == 1 then @high_hex_adjust = true
-
-      anchor_in_hexes = false
-      ax = @anchor_hex[0]
-      ay = @anchor_hex[1]
-      for hx in @hexes
-        anchor_in_hexes = true if hx[0] == ax and hx[1] == ay
-
-      if (not anchor_in_hexes) and (high_hex_col - a) % 2 == 1 and anchor_top < top
-        console.log("Non-rendered anchor hex is out of bounds (higher than high hex).") if @metrics_report == true
-        @high_hex_adjust = true
-
-    if @metrics_report == true
-      console.log("PieceRenderBox:")
-      console.log("    top = "+top)
-      console.log("    anchor_top = "+anchor_top)
-      console.log("    high_hex_half_step = "+high_hex_half_step)
-      console.log("    bottom = "+bottom)
-      console.log("    left = "+left)
-      console.log("    right = "+right)
-      console.log("    center to anchor delta = "+@center_to_anchor_delta[0]+","+@center_to_anchor_delta[1])
-  #    console.log("     = "+)
-  #    console.log("     = "+)
-      console.log("    cols = "+cols)
-      console.log("    halves = "+halves)
-      console.log("    WIDTH = "+@width)
-      console.log("    HEIGHT = "+@height)
-      console.log("    BOX-XY = "+@box_xy[0]+","+@box_xy[1])
-      console.log("    HIGH HEX ADJUST = "+@high_hex_adjust)
-      console.log("    ANCHOR HEX = "+@anchor_hex[0]+","+@anchor_hex[1])
+  prepare_next_redraw: (x,y) ->
+    console.log("PieceRedrawBuffer.prepare_next_redraw()")
+    ctx = @redraw_image.getContext('2d')
+    ctx.clearRect(0,0,@width,@height)
+    ctx.drawImage(@view.canvas,x,y,@width,@height,0,0,@width,@height)
+    @redraw_active = true
+    @redraw_x = x
+    @redraw_y =y
 
 
 
@@ -455,6 +293,9 @@ class PuzzleView
     @puzzle = puzzle_app
 
     @puzzle_xy = [100,30]
+
+    @bottom_margin = [100,246,420,34]
+    @right_margin = [484,0,36,246]
 
     @backgrounds = ["#cc5050","#80cc50","#50b4cc",
                     "#b450cc","#cc8050","#50cc50",
@@ -468,6 +309,14 @@ class PuzzleView
     @context = @get_drawing_context("canvas")
     @img = document.getElementById("photo")
     @context.drawImage(@img,@puzzle_xy[0],@puzzle_xy[1])
+
+
+  clear_margins: () ->
+    bt = @bottom_margin
+    rt = @right_margin
+    @context = @get_drawing_context("canvas")
+    @context.clearRect(bt[0],bt[1],bt[2],bt[3])
+    @context.clearRect(rt[0],rt[1],rt[2],rt[3])
 
 
   get_drawing_context: (mode) ->
@@ -641,6 +490,10 @@ class HexBox
     @height = 10*(@bottom-@top+2) + 1
 
 
+  get_box_size: () ->
+    return [@width,@height]
+
+
   get_anchor_hex: () ->
     aa = @left
     bb = (@top + @top%2)/2
@@ -715,6 +568,72 @@ class HexGrid extends HexBox
     @puzzle = puzzle_app
     @corner_fit = "box-odd"
     @box_xy = @puzzle.puzzle_view.puzzle_xy
+
+
+
+class PixelHexTester
+
+
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+    @grid_model = @puzzle.grid_model
+    @xx = 120
+    @yy = 30
+    @wd = 350
+    @ht = 220
+
+
+  test: (n) ->
+    for k in [0..n]
+      @pixel_test()
+
+
+  pixel_test: () ->
+    x = @xx + Math.floor(@wd*Math.random())
+    y = @yy + Math.floor(@ht*Math.random())
+    @dot(x,y)
+
+
+  mark_hex_centerpoints: () ->
+    for aa in [1..24]
+      for bb in [1..10]
+        if not (aa%2 == 1 and bb == 10)
+          corner = @grid_model.get_xy(aa,bb)
+          @put_dot(corner[0],corner[1],"#666666")
+          ctr_x = corner[0]+9
+          ctr_y = corner[1]+10
+          @put_dot(ctr_x,ctr_y,"#ff0000")
+
+
+  dot: (x,y) ->
+    hex = @grid_model.get_hex(x,y)
+    if hex[0] > 0 and hex[0] < 25 and hex[1] > 0 and hex[1] < 11
+      color = @get_dot_color(hex)
+      @put_dot(x,y,color)
+
+
+  put_dot: (x,y,color) ->
+    canvas = document.getElementById("puzzle-widget")
+    context = canvas.getContext('2d')
+    context.fillStyle = color
+    context.fillRect(x,y,1,1)
+
+
+  color_name: (cc) ->
+    cc = "   red" if cc == "#ff0000"
+    cc = " green" if cc == "#00ff00"
+    cc = "yellow" if cc == "#ffff00"
+    cc
+
+
+  get_dot_color: (hex) ->
+    color = "#00ff00" if hex[0] % 2 == 0 and hex[1] % 3 == 0
+    color = "#ff0000" if hex[0] % 2 == 0 and hex[1] % 3 == 1
+    color = "#ffff00" if hex[0] % 2 == 0 and hex[1] % 3 == 2
+    color = "#ffff00" if hex[0] % 2 == 1 and hex[1] % 3 == 0
+    color = "#00ff00" if hex[0] % 2 == 1 and hex[1] % 3 == 1
+    color = "#ff0000" if hex[0] % 2 == 1 and hex[1] % 3 == 2
+    color
 
 
 
