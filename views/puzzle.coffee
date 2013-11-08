@@ -14,6 +14,7 @@ class PuzzleApp
     @mask = new MissingPiecesMask(this)
     @piece = new PuzzlePiece(this)
 
+
 #    @puzzle_pattern.draw_pattern()
 #    @hex_draw.draw_all_hexes()
     @hex_draw.fill_all_hexes()
@@ -180,7 +181,8 @@ class PuzzlePiece
     xx = @hex_box.box_xy[0] - @puzzle.puzzle_view.puzzle_xy[0]
     yy = @hex_box.box_xy[1] - @puzzle.puzzle_view.puzzle_xy[1]
 
-    @photo_clip_context.drawImage(@puzzle.puzzle_view.img,xx,yy,@hex_box.width,@hex_box.height,0,0,@hex_box.width,@hex_box.height)
+    photo = document.getElementById(@puzzle.puzzle_view.photo)
+    @photo_clip_context.drawImage(photo,xx,yy,@hex_box.width,@hex_box.height,0,0,@hex_box.width,@hex_box.height)
 
     view_context = @puzzle.puzzle_view.context_canvas
     view_context.drawImage(@photo_clip,0,190)
@@ -293,6 +295,9 @@ class PuzzleView
 
     @puzzle = puzzle_app
 
+    @photo_picker = new PhotoPicker
+    @photo = @photo_picker.pick_new_photo()
+
     @puzzle_xy = [100,30]
 
     @bottom_margin = [100,246,420,34]
@@ -308,7 +313,8 @@ class PuzzleView
     @context_canvas = @canvas.getContext('2d')
 
     @context = @get_drawing_context("canvas")
-    @img = document.getElementById("photo")
+
+    @img = document.getElementById(@photo)
     @context.drawImage(@img,@puzzle_xy[0],@puzzle_xy[1])
 
 
@@ -317,7 +323,7 @@ class PuzzleView
     rt = @right_margin
     @context = @get_drawing_context("canvas")
     @context.clearRect(bt[0],bt[1],bt[2],bt[3])
-    @context.clearRect(rt[0],rt[1],rt[2],rt[3])
+    @context.clearRect(rt[0],rt[1],rt[2],rt[3]) # TODO need to add top margin
 
 
   get_drawing_context: (mode) ->
@@ -558,6 +564,23 @@ class HexGrid extends HexBox
     @puzzle = puzzle_app
     @corner_fit = "box-odd"
     @box_xy = @puzzle.puzzle_view.puzzle_xy
+
+
+
+class PhotoPicker
+
+  constructor: () ->
+    @photo_list = ["hx005","hx033","hx143","hx156","hx165",
+                   "hx223","hx237","hx298","hx384","hx418",
+                   "hx476","hx531","hx547","hx636","hx661",
+                   "hx729","hx781","hx790","hx792","hx800",
+                   "hx808","hx813","hx820","hx831","hx836",
+                   "hx849","hx860","hx876"]
+
+
+  pick_new_photo: () ->
+    photo_number = Math.floor((@photo_list.length)*Math.random())
+    return @photo_list[photo_number]
 
 
 
