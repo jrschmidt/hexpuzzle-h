@@ -79,9 +79,15 @@ class EventHandler
       x = px-dx
       y = py-dy
 
-#      hex = @puzzle.grid_model.get_hex(x,y)
-#      alert("MOVED to different hex") if hex[0] != @ui_status.active_hex[0] || hex[1] != @ui_status.active_hex[1]
-#      console.log("MOUSE-MOVE event:  x,y = "+x+","+y)
+      # TODO Disable 'different hex' function when crossing a '99' zone.
+      # TODO This probably doesn't use the box center offset.
+      hex = @puzzle.grid_model.get_hex(x,y)
+      if hex[0] != @ui_status.active_hex[0] || hex[1] != @ui_status.active_hex[1]
+        @ui_status.set_active_hex(hex[0],hex[1])
+        @puzzle.piece.draw_piece_ab(hex[0],hex[1])
+
+#        alert("MOVED to different hex") if hex[0] != @ui_status.active_hex[0] || hex[1] != @ui_status.active_hex[1]
+#        console.log("MOUSE-MOVE event:  x,y = "+x+","+y)
 
       @puzzle.pixel_test.big_dot(x,y)
 
