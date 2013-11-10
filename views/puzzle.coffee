@@ -39,7 +39,7 @@ class EventHandler
     @show_clicks = true
 
 
-  click_handle: (e) ->
+  handle_mousedown: (e) ->
     @canvas = document.getElementById("puzzle-widget")
     dx = @canvas.offsetLeft
     dy = @canvas.offsetTop
@@ -50,6 +50,9 @@ class EventHandler
 
     console.log("mouse click: "+x+","+y)
     @puzzle.pixel_test.big_dot(x,y) if @show_clicks == true
+
+    console.log("MOUSEDOWN within piece bounding box") if @puzzle.piece.in_bounding_box(x,y)
+
     hex = @piece_drag.get_piece_hex_position(x,y)
     console.log("A*,B* ~= "+hex[0]+","+hex[1])
     @puzzle.piece.draw_piece_ab(hex[0],hex[1])
@@ -62,6 +65,7 @@ class PieceDrag
     @puzzle = puzzle_app
     @hex_box = @puzzle.hex_box
     @grid_model = @puzzle.grid_model
+    @drag_active = false
 
 
   get_piece_hex_position: (x,y) ->
@@ -74,7 +78,6 @@ class PieceDrag
     wd_ht = @hex_box.get_box_size()
     dx = Math.floor(wd_ht[0]/2) - 10
     dy = Math.floor(wd_ht[1]/2) - 10
-    console.log("piece center to anchor hex offset = "+dx+","+dy)
     return [dx,dy]
 
 
@@ -156,6 +159,7 @@ class PuzzlePiece
     @piece_mask  = new PiecePattern(this)
     @redraw = new PieceRedrawBuffer(this)
     @hexes = []
+    @bounding_box = [0,0,0,0,]
 
 
   construct_piece: (sym) ->
@@ -163,8 +167,9 @@ class PuzzlePiece
     @hexes = @get_hexes()
     @hex_box.set_hex_box(sym)
     wd_ht = @hex_box.get_box_size()
-    @redraw.reset_size(wd_ht[0],wd_ht[1])
-
+    @width = wd_ht[0]
+    @height = wd_ht[1]
+    @redraw.reset_size(@width,@height)
     @piece_mask.draw_piece_pattern()
     @cut_piece_from_photo()
     @draw_piece_ab(-7,5)
@@ -200,6 +205,22 @@ class PuzzlePiece
   draw_piece: (x,y) ->
     context = @puzzle.puzzle_view.context_canvas
     context.drawImage(@piece_mask.img,x,y)
+    @reset_bounding_box(x,y)
+
+
+  # TODO This 'bounding box' thing might be something that we'll eventually
+  #      want to break out into a separate class representing the rendering
+  #      location of the piece as it is drawn in different locations across
+  #      the grid.
+  reset_bounding_box: (x,y) ->
+    @left = x
+    @right = x + @width
+    @top = y
+    @bottom = y + @height
+
+
+  in_bounding_box: (x,y) ->
+    if x>@left && x<@right && y>@top && y<@bottom then return true else return false
 
 
   # TODO Does this method belong in PuzzlePattern class?
@@ -352,20 +373,13 @@ class PuzzleGridModel
     aa = Math.floor((x-12)/14)-7
     if aa%2 != 0 then odd = 1 else odd = 0
     bb = Math.floor((y-9*odd+2.5)/20)-1
-    console.log("ab = "+[aa,bb])
     corner = @puzzle.hex_box.get_box_xy_ab(aa,bb)
-    console.log("corner = "+corner)
     ctr_x = corner[0]+9
     ctr_y = corner[1]+10
-    console.log("center = "+ctr_x+","+ctr_y)
     dx = Math.abs(x-ctr_x)
     dy = Math.abs(y-ctr_y)
-    console.log("dx = "+dx)
-    console.log("dy = "+dy)
     r2 = dx*dx+dy*dy
-    console.log("r2 = "+r2)
     in_bounds = false if r2>67 #(if radius > 8.2)
-
     hex = [aa,bb] if (in_bounds == true)
     return hex
 
@@ -691,7 +705,7 @@ class PixelHexTester
 
 
 @mousedown = (e) ->
-  @app.events.click_handle(e)
+  @app.events.handle_mousedown(e)
 
 
 start = () ->
