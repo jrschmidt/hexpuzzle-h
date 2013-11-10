@@ -68,6 +68,24 @@ class EventHandler
     @ui_status.terminate_piece_drag()
 
 
+  handle_mousemove: (e) ->
+    if @ui_status.drag_active
+
+      @canvas = document.getElementById("puzzle-widget")
+      dx = @canvas.offsetLeft
+      dy = @canvas.offsetTop
+      px = e.pageX
+      py = e.pageY
+      x = px-dx
+      y = py-dy
+
+#      hex = @puzzle.grid_model.get_hex(x,y)
+#      alert("MOVED to different hex") if hex[0] != @ui_status.active_hex[0] || hex[1] != @ui_status.active_hex[1]
+#      console.log("MOUSE-MOVE event:  x,y = "+x+","+y)
+
+      @puzzle.pixel_test.big_dot(x,y)
+
+
 
 class UiStatus
 
@@ -75,6 +93,18 @@ class UiStatus
     @puzzle = puzzle_app
 
     @drag_active = false
+    @mouse_on_hex = false
+    @active_hex = [99,99]
+
+
+  set_active_hex: (a,b) ->
+    @mouse_on_hex = true
+    @active_hex = [a,b]
+
+
+  disable_active_hex: () ->
+    @mouse_on_hex = false
+    @active_hex = [99,99]
 
 
   activate_piece_drag: () ->
@@ -739,6 +769,10 @@ class PixelHexTester
 
 @mouseup = (e) ->
   @app.events.handle_mouseup(e)
+
+
+@mousemove = (e) ->
+  @app.events.handle_mousemove(e)
 
 
 start = () ->
