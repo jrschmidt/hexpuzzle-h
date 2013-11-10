@@ -8,6 +8,7 @@ class PuzzleApp
 
     @hex_box = new HexBox(this)
 
+    @ui_status = new UiStatus(this)
     @events = new EventHandler(this)
 
     @puzzle_pattern = new PuzzlePattern(this)
@@ -32,8 +33,7 @@ class EventHandler
 
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
-    @grid_model = @puzzle.grid_model
-
+    @ui_status = @puzzle.ui_status
     @piece_drag = new PieceDrag(@puzzle)
 
     @show_clicks = true
@@ -51,11 +51,40 @@ class EventHandler
     console.log("mouse click: "+x+","+y)
     @puzzle.pixel_test.big_dot(x,y) if @show_clicks == true
 
+#    if @puzzle.piece.in_bounding_box(x,y)
+#      console.log("MOUSEDOWN within piece bounding box")
+#      @ui_status.activate_piece_drag()
+
     console.log("MOUSEDOWN within piece bounding box") if @puzzle.piece.in_bounding_box(x,y)
+    @ui_status.activate_piece_drag() if @puzzle.piece.in_bounding_box(x,y)
 
     hex = @piece_drag.get_piece_hex_position(x,y)
     console.log("A*,B* ~= "+hex[0]+","+hex[1])
     @puzzle.piece.draw_piece_ab(hex[0],hex[1])
+
+
+  handle_mouseup: (e) ->
+    console.log("MOUSE-UP event")
+    @ui_status.terminate_piece_drag()
+
+
+
+class UiStatus
+
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+
+    @drag_active = false
+
+
+  activate_piece_drag: () ->
+    @drag_active = true
+    console.log("PIECE DRAG: Active")
+
+
+  terminate_piece_drag: () ->
+    @drag_active = false
+    console.log("PIECE DRAG: Terminated")
 
 
 
@@ -706,6 +735,10 @@ class PixelHexTester
 
 @mousedown = (e) ->
   @app.events.handle_mousedown(e)
+
+
+@mouseup = (e) ->
+  @app.events.handle_mouseup(e)
 
 
 start = () ->
