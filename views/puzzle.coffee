@@ -51,8 +51,10 @@ class EventHandler
     console.log("mouse click: "+x+","+y)
     @puzzle.pixel_test.big_dot(x,y) if @show_clicks == true
 
-    console.log("MOUSEDOWN within piece bounding box") if @puzzle.piece.in_bounding_box(x,y)
-    @ui_status.activate_piece_drag() if @puzzle.piece.in_bounding_box(x,y)
+    if @puzzle.piece.in_bounding_box(x,y)
+      console.log("MOUSEDOWN within piece bounding box")
+      @ui_status.activate_piece_drag()
+      delta = @puzzle.hex_box.get_anchor_to_dragpoint(x,y)
 
     hex = @piece_drag.get_piece_hex_position(x,y)
     console.log("A*,B* ~= "+hex[0]+","+hex[1])
@@ -75,11 +77,9 @@ class EventHandler
       x = px-dx
       y = py-dy
 
-      # TODO This probably doesn't use the box center offset.
-      # FIXME Instead of calling get_hex with x,y we should call get_hex with
-      #       values for x and y that are adjusted for the difference between
-      #       the anchor-hex and the center of the piece bounding box.
-      #       
+
+#      mouse_hex = @puzzle.grid_model.get_hex(x-delta[0],y-delta[1])
+
       mouse_hex = @puzzle.grid_model.get_hex(x,y)
       m_hx_a = mouse_hex[0]
       m_hx_b = mouse_hex[1]
@@ -265,6 +265,7 @@ class PuzzlePiece
     @redraw.apply_redraw()
     @redraw.prepare_next_redraw(xy[0],xy[1])
     @draw_piece(xy[0],xy[1])
+    @last_rendered_xy = xy
 
 
   draw_piece: (x,y) ->
@@ -603,9 +604,14 @@ class HexBox
 
 
   get_anchor_to_dragpoint: (x,y) ->
-    an_dp_x = x - @box_xy[0] - @box_corner_to_anchor_hex_center[0]
-    an_dp_y = y - @box_xy[1] - @box_corner_to_anchor_hex_center[1]
+    an_dp_x = x - @puzzle.piece.last_rendered_xy[0] - @box_corner_to_anchor_hex_center[0]
+    an_dp_y = y - @puzzle.piece.last_rendered_xy[1] - @box_corner_to_anchor_hex_center[1]
     @anchor_to_dragpoint = [an_dp_x,an_dp_y]
+    console.log("ANCHOR to DRAGPOINT Delta:")
+    console.log("    x,y = "+x+","+y)
+    console.log("    box corner = "+@puzzle.piece.last_rendered_xy)  # FIXME FIXME box_xy is box's proper corner, not its current corner !!!!
+    console.log("    corner to anchor hex center = "+@box_corner_to_anchor_hex_center)
+    console.log("    RESULT = "+@anchor_to_dragpoint)
 
 
   test_left_right_top_bottom: (aa,b2) ->
