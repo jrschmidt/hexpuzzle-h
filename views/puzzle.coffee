@@ -51,10 +51,6 @@ class EventHandler
     console.log("mouse click: "+x+","+y)
     @puzzle.pixel_test.big_dot(x,y) if @show_clicks == true
 
-#    if @puzzle.piece.in_bounding_box(x,y)
-#      console.log("MOUSEDOWN within piece bounding box")
-#      @ui_status.activate_piece_drag()
-
     console.log("MOUSEDOWN within piece bounding box") if @puzzle.piece.in_bounding_box(x,y)
     @ui_status.activate_piece_drag() if @puzzle.piece.in_bounding_box(x,y)
 
@@ -64,8 +60,8 @@ class EventHandler
 
 
   handle_mouseup: (e) ->
-    console.log("MOUSE-UP event")
-    @ui_status.terminate_piece_drag()
+    console.log("MOUSE-UP event") if @ui_status.drag_active
+    @ui_status.terminate_piece_drag() if @ui_status.drag_active
 
 
   handle_mousemove: (e) ->
@@ -79,15 +75,18 @@ class EventHandler
       x = px-dx
       y = py-dy
 
-      # TODO Disable 'different hex' function when crossing a '99' zone.
       # TODO This probably doesn't use the box center offset.
-      hex = @puzzle.grid_model.get_hex(x,y)
-      if hex[0] != @ui_status.active_hex[0] || hex[1] != @ui_status.active_hex[1]
-        @ui_status.set_active_hex(hex[0],hex[1])
-        @puzzle.piece.draw_piece_ab(hex[0],hex[1])
-
-#        alert("MOVED to different hex") if hex[0] != @ui_status.active_hex[0] || hex[1] != @ui_status.active_hex[1]
-#        console.log("MOUSE-MOVE event:  x,y = "+x+","+y)
+      # FIXME Instead of calling get_hex with x,y we should call get_hex with
+      #       values for x and y that are adjusted for the difference between
+      #       the anchor-hex and the center of the piece bounding box.
+      #       
+      mouse_hex = @puzzle.grid_model.get_hex(x,y)
+      m_hx_a = mouse_hex[0]
+      m_hx_b = mouse_hex[1]
+      if m_hx_a != 99
+        if ( m_hx_a != @ui_status.active_hex[0] || m_hx_b != @ui_status.active_hex[1] )
+          @ui_status.set_active_hex(m_hx_a,m_hx_b)
+          @puzzle.piece.draw_piece_ab(m_hx_a,m_hx_b)
 
       @puzzle.pixel_test.big_dot(x,y)
 
@@ -135,7 +134,8 @@ class PieceDrag
 
   get_piece_hex_position: (x,y) ->
     dxdy = @get_piece_offset()
-    hex = @grid_model.get_hex(x-dxdy[0],y-dxdy[1])
+    hex = @grid_model.get_hex(x,y)
+#    hex = @grid_model.get_hex(x-dxdy[0],y-dxdy[1])
     return hex
 
 
@@ -552,6 +552,7 @@ class HexBox
     @get_anchor_hex()
     @get_box_xy()
     @get_height_width()
+    @get_box_corner_to_anchor_hex_center()
     @report_metrics() if @metrics_report == true
 
 
@@ -592,6 +593,19 @@ class HexBox
         @corner_fit = "high"
       else
         @corner_fit = "low"
+
+
+  get_box_corner_to_anchor_hex_center: () ->
+    if @corner_fit == "high"
+      @box_corner_to_anchor_hex_center  = [9,10]
+    else
+      @box_corner_to_anchor_hex_center  = [9,20]
+
+
+  get_anchor_to_dragpoint: (x,y) ->
+    an_dp_x = x - @box_xy[0] - @box_corner_to_anchor_hex_center[0]
+    an_dp_y = y - @box_xy[1] - @box_corner_to_anchor_hex_center[1]
+    @anchor_to_dragpoint = [an_dp_x,an_dp_y]
 
 
   test_left_right_top_bottom: (aa,b2) ->
@@ -691,26 +705,33 @@ class PixelHexTester
 
   adjusted_hex_quick_mark: () ->
     dxy = @puzzle.events.piece_drag.get_piece_offset()
+    anchor = @puzzle.piece.hex_box.anchor_hex
     for aa in [-7..24]
       for bb in [1..10]
-        if aa == 1 && bb == 1 then origin = true else origin = false
+        hex_type = "normal"
+        if aa == 1 && bb == 1 then hex_type = "origin"
+        if aa == anchor[0] && bb == anchor[1] then hex_type = "target"
         if not (aa%2 == 1 and bb == 10)
           corner = @puzzle.hex_box.get_box_xy_ab(aa,bb)
           ctr_x = corner[0]+9+dxy[0]
           ctr_y = corner[1]+10+dxy[1]
-          hx11 = [corner[0]-9,corner[1]-10] if aa == 1 && bb == 1
-          @circle_hex(ctr_x,ctr_y,origin)
+          @circle_hex(ctr_x,ctr_y,hex_type)
 
 
-  circle_hex: (x,y,origin) ->
+  circle_hex: (x,y,hex_type) ->
     canvas = document.getElementById("puzzle-widget")
     context = canvas.getContext('2d')
-    context.strokeStyle = "black"
-    context.fillStyle = "blue"
+    context.strokeStyle = "gray"
     context.beginPath()
     context.arc(x,y,8.2,0,6.28)
     context.stroke()
-    context.fill() if origin == true
+    switch hex_type
+      when "origin"
+        context.fillStyle = "blue"
+        context.fill()
+      when "target"
+        context.fillStyle = "green"
+        context.fill()
     context.closePath()
 
 
