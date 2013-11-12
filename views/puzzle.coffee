@@ -24,8 +24,8 @@ class PuzzleApp
     pc = Math.floor(16*Math.random())
     @piece.construct_piece(pieces[pc])
 
-    @pixel_test = new PixelHexTester(this)
-    @pixel_test.adjusted_hex_quick_mark()
+#    @pixel_test = new PixelHexTester(this)
+#    @pixel_test.adjusted_hex_quick_mark()
 
 
 
@@ -36,7 +36,7 @@ class EventHandler
     @ui_status = @puzzle.ui_status
     @piece_drag = new PieceDrag(@puzzle)
 
-    @show_clicks = true
+    @show_clicks = false
 
 
   handle_mousedown: (e) ->
@@ -57,7 +57,7 @@ class EventHandler
       @puzzle.hex_box.get_anchor_to_dragpoint(x,y)
       mouse_hex = @puzzle.grid_model.get_hex(x,y)
       console.log("A*,B* ~= "+mouse_hex[0]+","+mouse_hex[1])
-      @puzzle.piece.draw_piece_ab(mouse_hex[0],mouse_hex[1])
+#      @puzzle.piece.draw_piece_ab(mouse_hex[0],mouse_hex[1])
 
 
   handle_mouseup: (e) ->
@@ -84,7 +84,7 @@ class EventHandler
           @ui_status.set_active_hex(m_hx_a,m_hx_b)
           @puzzle.piece.draw_piece_ab(m_hx_a,m_hx_b)
 
-      @puzzle.pixel_test.big_dot(x,y)
+#      @puzzle.pixel_test.big_dot(x,y)
 
 
 
@@ -597,11 +597,7 @@ class HexBox
     an_dp_x = x - @puzzle.piece.last_rendered_xy[0] - @box_corner_to_anchor_hex_center[0]
     an_dp_y = y - @puzzle.piece.last_rendered_xy[1] - @box_corner_to_anchor_hex_center[1]
     @anchor_to_dragpoint = [an_dp_x,an_dp_y]
-    console.log("ANCHOR to DRAGPOINT Delta:")
-    console.log("    x,y = "+x+","+y)
-    console.log("    box corner = "+@puzzle.piece.last_rendered_xy)
-    console.log("    corner to anchor hex center = "+@box_corner_to_anchor_hex_center)
-    console.log("    RESULT = "+@anchor_to_dragpoint)
+    console.log("Anchor to dragpoint delta = "+@anchor_to_dragpoint)
 
 
   test_left_right_top_bottom: (aa,b2) ->
