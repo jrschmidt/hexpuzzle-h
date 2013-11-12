@@ -54,11 +54,10 @@ class EventHandler
     if @puzzle.piece.in_bounding_box(x,y)
       console.log("MOUSEDOWN within piece bounding box")
       @ui_status.activate_piece_drag()
-      delta = @puzzle.hex_box.get_anchor_to_dragpoint(x,y)
-
-    hex = @piece_drag.get_piece_hex_position(x,y)
-    console.log("A*,B* ~= "+hex[0]+","+hex[1])
-    @puzzle.piece.draw_piece_ab(hex[0],hex[1])
+      @puzzle.hex_box.get_anchor_to_dragpoint(x,y)
+      mouse_hex = @puzzle.grid_model.get_hex(x,y)
+      console.log("A*,B* ~= "+mouse_hex[0]+","+mouse_hex[1])
+      @puzzle.piece.draw_piece_ab(mouse_hex[0],mouse_hex[1])
 
 
   handle_mouseup: (e) ->
@@ -76,9 +75,6 @@ class EventHandler
       py = e.pageY
       x = px-dx
       y = py-dy
-
-
-#      mouse_hex = @puzzle.grid_model.get_hex(x-delta[0],y-delta[1])
 
       mouse_hex = @puzzle.grid_model.get_hex(x,y)
       m_hx_a = mouse_hex[0]
@@ -123,7 +119,7 @@ class UiStatus
 
 
 
-class PieceDrag
+class PieceDrag # [Currently only used by PixelHexTest]
 
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
@@ -132,14 +128,7 @@ class PieceDrag
     @drag_active = false
 
 
-  get_piece_hex_position: (x,y) ->
-    dxdy = @get_piece_offset()
-    hex = @grid_model.get_hex(x,y)
-#    hex = @grid_model.get_hex(x-dxdy[0],y-dxdy[1])
-    return hex
-
-
-  get_piece_offset: () ->
+  get_piece_offset: () -> # [Currently only used by PixelHexTest]
     wd_ht = @hex_box.get_box_size()
     dx = Math.floor(wd_ht[0]/2) - 10
     dy = Math.floor(wd_ht[1]/2) - 10
@@ -274,10 +263,6 @@ class PuzzlePiece
     @reset_bounding_box(x,y)
 
 
-  # TODO This 'bounding box' thing might be something that we'll eventually
-  #      want to break out into a separate class representing the rendering
-  #      location of the piece as it is drawn in different locations across
-  #      the grid.
   reset_bounding_box: (x,y) ->
     @left = x
     @right = x + @width
@@ -436,14 +421,19 @@ class PuzzleGridModel
   get_hex: (x,y) ->
     hex = [99,99]
     in_bounds = true
-    aa = Math.floor((x-12)/14)-7
+
+    delta = @puzzle.hex_box.anchor_to_dragpoint
+    xx = x - delta[0]
+    yy = y - delta[1]
+
+    aa = Math.floor((xx-12)/14)-7
     if aa%2 != 0 then odd = 1 else odd = 0
-    bb = Math.floor((y-9*odd+2.5)/20)-1
+    bb = Math.floor((yy-9*odd+2.5)/20)-1
     corner = @puzzle.hex_box.get_box_xy_ab(aa,bb)
     ctr_x = corner[0]+9
     ctr_y = corner[1]+10
-    dx = Math.abs(x-ctr_x)
-    dy = Math.abs(y-ctr_y)
+    dx = Math.abs(xx-ctr_x)
+    dy = Math.abs(yy-ctr_y)
     r2 = dx*dx+dy*dy
     in_bounds = false if r2>67 #(if radius > 8.2)
     hex = [aa,bb] if (in_bounds == true)
@@ -609,7 +599,7 @@ class HexBox
     @anchor_to_dragpoint = [an_dp_x,an_dp_y]
     console.log("ANCHOR to DRAGPOINT Delta:")
     console.log("    x,y = "+x+","+y)
-    console.log("    box corner = "+@puzzle.piece.last_rendered_xy)  # FIXME FIXME box_xy is box's proper corner, not its current corner !!!!
+    console.log("    box corner = "+@puzzle.piece.last_rendered_xy)
     console.log("    corner to anchor hex center = "+@box_corner_to_anchor_hex_center)
     console.log("    RESULT = "+@anchor_to_dragpoint)
 
