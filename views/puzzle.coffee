@@ -15,10 +15,13 @@ class PuzzleApp
     @mask = new MissingPiecesMask(this)
     @piece = new PuzzlePiece(this)
 
+    @pz_status = new PuzzleStatus(this)
 
+
+    @mask.draw_mask()
 #    @puzzle_pattern.draw_pattern()
 #    @hex_draw.draw_all_hexes()
-    @hex_draw.fill_all_hexes()
+#    @hex_draw.fill_all_hexes()
 
     pieces = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
     pc = Math.floor(16*Math.random())
@@ -77,14 +80,13 @@ class EventHandler
       y = py-dy
 
       mouse_hex = @puzzle.grid_model.get_hex(x,y)
-      m_hx_a = mouse_hex[0]
-      m_hx_b = mouse_hex[1]
-      if m_hx_a != 99
-        if ( m_hx_a != @ui_status.active_hex[0] || m_hx_b != @ui_status.active_hex[1] )
-          @ui_status.set_active_hex(m_hx_a,m_hx_b)
-          @puzzle.piece.draw_piece_ab(m_hx_a,m_hx_b)
-
-#      @puzzle.pixel_test.big_dot(x,y)
+      mx_a = mouse_hex[0]
+      mx_b = mouse_hex[1]
+      if mx_a != 99
+        if ( mx_a != @ui_status.active_hex[0] || mx_b != @ui_status.active_hex[1] )
+          @ui_status.set_active_hex(mx_a,mx_b)
+          @puzzle.piece.draw_piece_ab(mx_a,mx_b)
+          @puzzle.pz_status.set_piece() if @puzzle.piece.piece_is_anchored(mx_a,mx_b)
 
 
 
@@ -119,6 +121,25 @@ class UiStatus
 
 
 
+class PuzzleStatus
+
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+    @reset_puzzle()
+
+
+  reset_puzzle: () ->
+    @pieces_set = 0
+
+
+  set_piece: () ->
+    @puzzle.ui_status.terminate_piece_drag()
+    console.log("SET PIECE: "+@puzzle.piece.sym)
+    @pieces_set = @pieces_set + 1
+    console.log(@pieces_set+" pieces are set")
+
+
+
 class PieceDrag # [Currently only used by PixelHexTest]
 
   constructor: (puzzle_app) ->
@@ -146,6 +167,7 @@ class PuzzlePattern
     @canvas = document.getElementById("puzzle-widget")
     @dstring = @canvas.getAttribute("data-puzzle-pattern")
 
+    @log_hexes = false
     @grid = @get_pattern_grid(@dstring)
 
 
@@ -158,8 +180,8 @@ class PuzzlePattern
         ch = @dstring[n]
         grid[row][col] = ch
         n = n+1
-    console.log(rrow) for rrow in grid
-    grid
+    console.log(rrow) for rrow in grid if @log_hexes == true
+    return grid
 
 
   draw_pattern: () -> # [(temp) - test/diagnostic method]
@@ -214,6 +236,7 @@ class PuzzlePiece
     @redraw = new PieceRedrawBuffer(this)
     @hexes = []
     @bounding_box = [0,0,0,0,]
+    @log_hexes = false
 
 
   construct_piece: (sym) ->
@@ -226,6 +249,7 @@ class PuzzlePiece
     @redraw.reset_size(@width,@height)
     @piece_mask.draw_piece_pattern()
     @cut_piece_from_photo()
+    console.log("piece ID: "+@sym)
     @draw_piece_ab(-7,5)
 
 
@@ -263,6 +287,13 @@ class PuzzlePiece
     @reset_bounding_box(x,y)
 
 
+  piece_is_anchored: (a,b) ->
+    if @hex_box.anchor_hex[0] == a && @hex_box.anchor_hex[1] == b
+      return true
+    else
+      return false
+
+
   reset_bounding_box: (x,y) ->
     @left = x
     @right = x + @width
@@ -280,9 +311,10 @@ class PuzzlePiece
     for bb in [1..10]
       for aa in [1..24]
         hexes.push([aa,bb]) if @puzzle.puzzle_pattern.grid[bb][aa] == @sym
-    console.log("PIECE ID: "+@sym)
-    console.log("    "+hx[0]+","+hx[1]) for hx in hexes
-    hexes
+    if @log_hexes == true
+      console.log("PIECE ID: "+@sym)
+      console.log("    "+hx[0]+","+hx[1]) for hx in hexes
+    return hexes
 
 
 
@@ -521,7 +553,7 @@ class HexBox
     @hexes = []
     @box_xy = [null,null]
     @corner_fit = "unknown"
-    @metrics_report = true
+    @metrics_report = false
 
 
   set_hex_box: (piece_symbol) ->
@@ -561,6 +593,7 @@ class HexBox
     bb = (@top + @top%2)/2
     bb = bb + 1 if @left%2 == 0 && @corner_fit == "low"
     @anchor_hex = [aa,bb]
+    console.log("anchor hex ="+@anchor_hex)
 
 
   get_box_xy: () ->
