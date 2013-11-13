@@ -1,34 +1,20 @@
 class PuzzleApp
 
   constructor: () ->
+    @pz_status = new PuzzleStatus(this)
+    @ui_status = new UiStatus(this)
+    @events = new EventHandler(this)
+
     @puzzle_view = new PuzzleView(this)
     @grid_model = new PuzzleGridModel(this)
     @hex_grid = new HexGrid(this)
     @hex_draw = new HexDraw(this)
-
     @hex_box = new HexBox(this)
-
-    @ui_status = new UiStatus(this)
-    @events = new EventHandler(this)
-
     @puzzle_pattern = new PuzzlePattern(this)
     @mask = new MissingPiecesMask(this)
     @piece = new PuzzlePiece(this)
 
-    @pz_status = new PuzzleStatus(this)
-
-
-    @mask.draw_mask()
-#    @puzzle_pattern.draw_pattern()
-#    @hex_draw.draw_all_hexes()
-#    @hex_draw.fill_all_hexes()
-
-    pieces = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
-    pc = Math.floor(16*Math.random())
-    @piece.construct_piece(pieces[pc])
-
-#    @pixel_test = new PixelHexTester(this)
-#    @pixel_test.adjusted_hex_quick_mark()
+    @pz_status.start_new_puzzle()
 
 
 
@@ -125,18 +111,38 @@ class PuzzleStatus
 
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
-    @reset_puzzle()
+    @all_pieces = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
+    @pieces_in_puzzle = 16
 
 
-  reset_puzzle: () ->
+  start_new_puzzle: () ->
+    @unset_pieces = @all_pieces
     @pieces_set = 0
+    @next_piece()
 
 
   set_piece: () ->
     @puzzle.ui_status.terminate_piece_drag()
     console.log("SET PIECE: "+@puzzle.piece.sym)
-    @pieces_set = @pieces_set + 1
+    @pieces_set += 1
+    @pieces_in_puzzle -= 1
     console.log(@pieces_set+" pieces are set")
+    if @pieces_set == 16
+      @puzzle_finished()
+    else
+      @next_piece()
+
+
+  puzzle_finished: () ->
+    alert("Puzzle finished")
+
+
+  next_piece: () ->
+    @puzzle.mask.draw_mask()
+    pc = Math.floor(@pieces_in_puzzle*Math.random())
+    @sym = @unset_pieces[pc]
+    @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
+    @puzzle.piece.construct_piece(@sym)
 
 
 
@@ -204,19 +210,21 @@ class PuzzlePattern
 
 
 class MissingPiecesMask
-  # TODO Add an Image object to this class. This way the puzzle piece image can
-  # move around the widget, being drawn over the mask image in 'source-atop"
-  # mode, so that the puzzle piece is only drawn over the mask image and nowhere
-  # else. Probably want to add the 'staging area' to the opaque part of the mask
-  # image, so that the piece can also be dragged across that region.
 
   constructor: (puzzle_app) ->
-
     @puzzle = puzzle_app
     @puzzle_pattern = @puzzle.puzzle_pattern
     @grid = @puzzle_pattern.grid
     @hex_draw = @puzzle.hex_draw
-    @missing = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
+    @init_missing_pieces_mask()
+
+
+#  TODO TODO TODO TODO
+#  Change this class to build the mask from the hexes for the pieces in
+#  @puzzle.pz_status.unset_pieces.
+
+  init_missing_pieces_mask: () ->
+    @missing = @puzzle.pz_status.all_pieces
 
 
   draw_mask: () ->
