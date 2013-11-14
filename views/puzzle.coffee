@@ -7,7 +7,6 @@ class PuzzleApp
 
     @puzzle_view = new PuzzleView(this)
     @grid_model = new PuzzleGridModel(this)
-    @hex_grid = new HexGrid(this)
     @hex_draw = new HexDraw(this)
     @hex_box = new HexBox(this)
     @puzzle_pattern = new PuzzlePattern(this)
@@ -23,9 +22,6 @@ class EventHandler
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @ui_status = @puzzle.ui_status
-    @piece_drag = new PieceDrag(@puzzle)
-
-    @show_clicks = false
 
 
   handle_mousedown: (e) ->
@@ -37,20 +33,13 @@ class EventHandler
     x = px-dx
     y = py-dy
 
-    console.log("mouse click: "+x+","+y)
-    @puzzle.pixel_test.big_dot(x,y) if @show_clicks == true
-
     if @puzzle.piece.in_bounding_box(x,y)
-      console.log("MOUSEDOWN within piece bounding box")
       @ui_status.activate_piece_drag()
       @puzzle.hex_box.get_anchor_to_dragpoint(x,y)
       mouse_hex = @puzzle.grid_model.get_hex(x,y)
-      console.log("A*,B* ~= "+mouse_hex[0]+","+mouse_hex[1])
-#      @puzzle.piece.draw_piece_ab(mouse_hex[0],mouse_hex[1])
 
 
   handle_mouseup: (e) ->
-    console.log("MOUSE-UP event") if @ui_status.drag_active
     @ui_status.terminate_piece_drag() if @ui_status.drag_active
 
 
@@ -98,12 +87,10 @@ class UiStatus
 
   activate_piece_drag: () ->
     @drag_active = true
-    console.log("PIECE DRAG: Active")
 
 
   terminate_piece_drag: () ->
     @drag_active = false
-    console.log("PIECE DRAG: Terminated")
 
 
 
@@ -116,17 +103,17 @@ class PuzzleStatus
 
 
   start_new_puzzle: () ->
-    @unset_pieces = @all_pieces
+    @unset_pieces = []
+    @unset_pieces[p] = @puzzle.pz_status.all_pieces[p] for p in [0..15]
     @pieces_set = 0
+    @puzzle.mask.start_color_cycle()
     @next_piece()
 
 
   set_piece: () ->
     @puzzle.ui_status.terminate_piece_drag()
-    console.log("SET PIECE: "+@puzzle.piece.sym)
     @pieces_set += 1
     @pieces_in_puzzle -= 1
-    console.log(@pieces_set+" pieces are set")
     if @pieces_set == 16
       @puzzle_finished()
     else
@@ -134,32 +121,16 @@ class PuzzleStatus
 
 
   puzzle_finished: () ->
+    @puzzle.puzzle_view.draw_photo()
     alert("Puzzle finished")
 
 
   next_piece: () ->
-    @puzzle.mask.draw_mask()
+    @puzzle.mask.reset_mask()
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
     @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
     @puzzle.piece.construct_piece(@sym)
-
-
-
-class PieceDrag # [Currently only used by PixelHexTest]
-
-  constructor: (puzzle_app) ->
-    @puzzle = puzzle_app
-    @hex_box = @puzzle.hex_box
-    @grid_model = @puzzle.grid_model
-    @drag_active = false
-
-
-  get_piece_offset: () -> # [Currently only used by PixelHexTest]
-    wd_ht = @hex_box.get_box_size()
-    dx = Math.floor(wd_ht[0]/2) - 10
-    dy = Math.floor(wd_ht[1]/2) - 10
-    return [dx,dy]
 
 
 
@@ -169,11 +140,8 @@ class PuzzlePattern
 
     @puzzle = puzzle_app
     @hex_draw = @puzzle.hex_draw
-
     @canvas = document.getElementById("puzzle-widget")
     @dstring = @canvas.getAttribute("data-puzzle-pattern")
-
-    @log_hexes = false
     @grid = @get_pattern_grid(@dstring)
 
 
@@ -186,26 +154,7 @@ class PuzzlePattern
         ch = @dstring[n]
         grid[row][col] = ch
         n = n+1
-    console.log(rrow) for rrow in grid if @log_hexes == true
     return grid
-
-
-  draw_pattern: () -> # [(temp) - test/diagnostic method]
-    @hex_draw.set_context("canvas")
-    n = 0
-    for row in [1..10]
-      for col in [1..24]
-        ch = @dstring[n]
-        n = n+1
-        switch ch
-          when "b","f","n" then hue = 0
-          when "a","e","m" then hue = 1
-          when "g","i" then hue = 2
-          when "c","k","o" then hue = 3
-          when "d","l","p" then hue = 4
-          when "h","j" then hue = 5
-          when "x" then hue = 6
-        @hex_draw.fill_hex_ab(col,row,hue) unless (row==10 && col%2==1)
 
 
 
@@ -216,22 +165,51 @@ class MissingPiecesMask
     @puzzle_pattern = @puzzle.puzzle_pattern
     @grid = @puzzle_pattern.grid
     @hex_draw = @puzzle.hex_draw
+    @backgrounds = ["#cc9999","#adcc99","#99c2cc",
+                    "#c299cc","#ccad99","#99cc99",
+                    "#99adcc","#cc99c2","#ccc299",
+                    "#99ccad","#9999cc","#cc99ad",
+                    "#c2cc99","#99ccc2","#ad99cc"]
+
     @init_missing_pieces_mask()
 
 
-#  TODO TODO TODO TODO
-#  Change this class to build the mask from the hexes for the pieces in
-#  @puzzle.pz_status.unset_pieces.
-
   init_missing_pieces_mask: () ->
-    @missing = @puzzle.pz_status.all_pieces
+    @missing = []
+    @missing[p] = @puzzle.pz_status.all_pieces[p] for p in [0..15]
+    @start_color_cycle()
+    @puzzle.puzzle_view.draw_photo()
+
+
+  reset_mask: () ->
+    @puzzle.puzzle_view.draw_photo()
+    @get_next_color()
+    @draw_mask()
+
+
+  start_color_cycle: () ->
+    if Math.floor(2*Math.random()) > 1
+      @color_direction = "up"
+    else
+      @color_direction = "down"
+    @color_number = Math.floor(15*Math.random())
+    @color = @backgrounds[@color_number]
+
+
+  get_next_color: () ->
+    switch @color_direction
+      when "up"
+        if @color_number == 14 then @color_number = 0 else @color_number += 1
+      when "down"
+        if @color_number == 0 then @color_number = 14 else @color_number -= 1
+    @color = @backgrounds[@color_number]
 
 
   draw_mask: () ->
     @hex_draw.set_context("canvas")
     for bb in [1..10]
       for aa in [1..24]
-        @hex_draw.fill_hex_ab(aa,bb,0) if @grid[bb][aa] in @missing
+        @hex_draw.fill_hex_ab(aa,bb,@color) if @grid[bb][aa] in @puzzle.pz_status.unset_pieces
 
 
 
@@ -244,7 +222,6 @@ class PuzzlePiece
     @redraw = new PieceRedrawBuffer(this)
     @hexes = []
     @bounding_box = [0,0,0,0,]
-    @log_hexes = false
 
 
   construct_piece: (sym) ->
@@ -257,7 +234,6 @@ class PuzzlePiece
     @redraw.reset_size(@width,@height)
     @piece_mask.draw_piece_pattern()
     @cut_piece_from_photo()
-    console.log("piece ID: "+@sym)
     @draw_piece_ab(-7,5)
 
 
@@ -319,9 +295,6 @@ class PuzzlePiece
     for bb in [1..10]
       for aa in [1..24]
         hexes.push([aa,bb]) if @puzzle.puzzle_pattern.grid[bb][aa] == @sym
-    if @log_hexes == true
-      console.log("PIECE ID: "+@sym)
-      console.log("    "+hx[0]+","+hx[1]) for hx in hexes
     return hexes
 
 
@@ -355,7 +328,7 @@ class PiecePattern
       yy = anchor_y + (bb - anchor_b) * 20
       if aa%2 != anchor_a%2
         if anchor_a%2 == 0 then yy = yy+10 else yy = yy-10
-      @hex_draw.fill_hex_xy(xx,yy,3)
+      @hex_draw.fill_hex_xy(xx,yy,"#000000")
 
 
 
@@ -414,17 +387,13 @@ class PuzzleView
     @bottom_margin = [100,246,420,34]
     @left_margin = [0,0,100,280]
 
-    @backgrounds = ["#cc9999","#adcc99","#99c2cc",
-                    "#c299cc","#ccad99","#99cc99",
-                    "#99adcc","#cc99c2","#ccc299",
-                    "#99ccad","#9999cc","#cc99ad",
-                    "#c2cc99","#99ccc2","#ad99cc"]
 
     @canvas = document.getElementById("puzzle-widget")
     @context_canvas = @canvas.getContext('2d')
 
-    @context = @get_drawing_context("canvas")
 
+  draw_photo: () ->
+    @context = @get_drawing_context("canvas")
     @img = document.getElementById(@photo)
     @context.drawImage(@img,@puzzle_xy[0],@puzzle_xy[1])
 
@@ -509,14 +478,13 @@ class HexDraw
     return xy
 
 
-  fill_hex_ab: (a,b,c_no) ->
-    alert("fill_hex_ab: "+a+","+b+"  "+c_no) if c_no == 1
+  fill_hex_ab: (a,b,color) ->
     xy = @get_hex_xy(a,b)
-    @fill_hex_xy(xy[0],xy[1],c_no)
+    @fill_hex_xy(xy[0],xy[1],color)
 
 
-  fill_hex_xy: (x,y,c_no) ->
-    @context.fillStyle = @colors[c_no]
+  fill_hex_xy: (x,y,color) ->
+    @context.fillStyle = color
     @context.beginPath()
     @context.moveTo(x+5,y)
     @context.lineTo(x+15,y)
@@ -529,30 +497,6 @@ class HexDraw
     @context.closePath()
 
 
-  draw_all_hexes: () -> # [test/diagnostic method]
-    @set_context("canvas")
-    for row in [1..10]
-      for col in [1..24]
-        if row%2 == 0
-          if col%2 == 0
-            c = 1
-          else
-            c = 2
-        else
-          if col%2 == 0
-            c = 3
-          else
-            c = 4
-        @fill_hex_ab(col,row,c) unless (row==10 && col%2==1)
-
-
-  fill_all_hexes: () -> # [test/diagnostic method]
-    @set_context("canvas")
-    for row in [1..10]
-      for col in [1..24]
-        @fill_hex_ab(col,row,4) unless (row==10 && col%2==1)
-
-
 
 class HexBox
 
@@ -561,7 +505,6 @@ class HexBox
     @hexes = []
     @box_xy = [null,null]
     @corner_fit = "unknown"
-    @metrics_report = false
 
 
   set_hex_box: (piece_symbol) ->
@@ -584,7 +527,6 @@ class HexBox
     @get_box_xy()
     @get_height_width()
     @get_box_corner_to_anchor_hex_center()
-    @report_metrics() if @metrics_report == true
 
 
   get_height_width: () ->
@@ -601,7 +543,6 @@ class HexBox
     bb = (@top + @top%2)/2
     bb = bb + 1 if @left%2 == 0 && @corner_fit == "low"
     @anchor_hex = [aa,bb]
-    console.log("anchor hex ="+@anchor_hex)
 
 
   get_box_xy: () ->
@@ -638,7 +579,6 @@ class HexBox
     an_dp_x = x - @puzzle.piece.last_rendered_xy[0] - @box_corner_to_anchor_hex_center[0]
     an_dp_y = y - @puzzle.piece.last_rendered_xy[1] - @box_corner_to_anchor_hex_center[1]
     @anchor_to_dragpoint = [an_dp_x,an_dp_y]
-    console.log("Anchor to dragpoint delta = "+@anchor_to_dragpoint)
 
 
   test_left_right_top_bottom: (aa,b2) ->
@@ -663,27 +603,6 @@ class HexBox
     return hexes
 
 
-  report_metrics: () ->
-    console.log("HexBox: left = "+@left)
-    console.log("HexBox: right = "+@right)
-    console.log("HexBox: top = "+@top)
-    console.log("HexBox: bottom = "+@bottom)
-    console.log("HexBox: width = "+@width)
-    console.log("HexBox: height = "+@height)
-    console.log("HexBox: corner fit = "+@corner_fit)
-    console.log("HexBox: anchor hex ="+@anchor_hex)
-    console.log("HexBox: box XY ="+@box_xy[0]+","+@box_xy[1])
-
-
-
-class HexGrid extends HexBox
-
-  constructor: (puzzle_app) ->
-    @puzzle = puzzle_app
-    @corner_fit = "box-odd"
-    @box_xy = @puzzle.puzzle_view.puzzle_xy
-
-
 
 class PhotoPicker
 
@@ -699,122 +618,6 @@ class PhotoPicker
   pick_new_photo: () ->
     photo_number = Math.floor((@photo_list.length)*Math.random())
     return @photo_list[photo_number]
-
-
-
-class PixelHexTester
-
-
-  constructor: (puzzle_app) ->
-    @puzzle = puzzle_app
-    @xx = 120
-    @yy = 30
-    @wd = 350
-    @ht = 220
-
-
-  test: (n) ->
-    for k in [0..n]
-      for z in [1.1000]
-        @pixel_test()
-        alert("pixel test: "+k)
-
-
-  pixel_test: () ->
-    x = @xx + Math.floor(@wd*Math.random())
-    y = @yy + Math.floor(@ht*Math.random())
-    @dot(x,y)
-
-
-  hex_quick_mark: () ->
-    for aa in [1..24]
-      for bb in [1..10]
-        if not (aa%2 == 1 and bb == 10)
-          corner = @puzzle.hex_box.get_box_xy_ab(aa,bb)
-          ctr_x = corner[0]+9
-          ctr_y = corner[1]+10
-          @circle_hex(ctr_x,ctr_y)
-
-
-  adjusted_hex_quick_mark: () ->
-    dxy = @puzzle.events.piece_drag.get_piece_offset()
-    anchor = @puzzle.piece.hex_box.anchor_hex
-    for aa in [-7..24]
-      for bb in [1..10]
-        hex_type = "normal"
-        if aa == 1 && bb == 1 then hex_type = "origin"
-        if aa == anchor[0] && bb == anchor[1] then hex_type = "target"
-        if not (aa%2 == 1 and bb == 10)
-          corner = @puzzle.hex_box.get_box_xy_ab(aa,bb)
-          ctr_x = corner[0]+9+dxy[0]
-          ctr_y = corner[1]+10+dxy[1]
-          @circle_hex(ctr_x,ctr_y,hex_type)
-
-
-  circle_hex: (x,y,hex_type) ->
-    canvas = document.getElementById("puzzle-widget")
-    context = canvas.getContext('2d')
-    context.strokeStyle = "gray"
-    context.beginPath()
-    context.arc(x,y,8.2,0,6.28)
-    context.stroke()
-    switch hex_type
-      when "origin"
-        context.fillStyle = "blue"
-        context.fill()
-      when "target"
-        context.fillStyle = "green"
-        context.fill()
-    context.closePath()
-
-
-  mark_hex_centerpoints: () ->
-    for aa in [1..24]
-      for bb in [1..10]
-        if not (aa%2 == 1 and bb == 10)
-          corner = @puzzle.hex_box.get_box_xy_ab(aa,bb)
-          @put_dot(corner[0],corner[1],"#666666")
-          ctr_x = corner[0]+9
-          ctr_y = corner[1]+10
-          @put_dot(ctr_x,ctr_y,"#ff0000")
-
-
-  dot: (x,y) ->
-    hex = @puzzle.events.piece_drag.get_piece_hex_position(x,y)
-    if hex[0] > 0 and hex[0] < 25 and hex[1] > 0 and hex[1] < 11
-      color = @get_dot_color(hex)
-      @put_dot(x,y,color)
-
-
-  put_dot: (x,y,color) ->
-    canvas = document.getElementById("puzzle-widget")
-    context = canvas.getContext('2d')
-    context.fillStyle = color
-    context.fillRect(x,y,1,1)
-
-
-  big_dot: (x,y) ->
-    canvas = document.getElementById("puzzle-widget")
-    context = canvas.getContext('2d')
-    context.fillStyle = "black"
-    context.fillRect(x-1,y-1,3,3)
-
-
-  color_name: (cc) ->
-    cc = "   red" if cc == "#ff0000"
-    cc = " green" if cc == "#00ff00"
-    cc = "yellow" if cc == "#ffff00"
-    cc
-
-
-  get_dot_color: (hex) ->
-    color = "#00ff00" if hex[0] % 2 == 0 and hex[1] % 3 == 0
-    color = "#ff0000" if hex[0] % 2 == 0 and hex[1] % 3 == 1
-    color = "#ffff00" if hex[0] % 2 == 0 and hex[1] % 3 == 2
-    color = "#ffff00" if hex[0] % 2 == 1 and hex[1] % 3 == 0
-    color = "#00ff00" if hex[0] % 2 == 1 and hex[1] % 3 == 1
-    color = "#ff0000" if hex[0] % 2 == 1 and hex[1] % 3 == 2
-    color
 
 
 
