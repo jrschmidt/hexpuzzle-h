@@ -6,6 +6,8 @@ class PuzzleApp
     @events = new EventHandler(this)
 
     @puzzle_view = new PuzzleView(this)
+    @colors = new ColorRotation
+    @indicator = new Indicator(this)
     @grid_model = new PuzzleGridModel(this)
     @hex_draw = new HexDraw(this)
     @hex_box = new HexBox(this)
@@ -106,8 +108,7 @@ class PuzzleStatus
     @unset_pieces = []
     @unset_pieces[p] = @puzzle.pz_status.all_pieces[p] for p in [0..15]
     @pieces_set = 0
-    @puzzle.mask.start_color_cycle()
-    @next_piece()
+    @start_first_piece()
 
 
   set_piece: () ->
@@ -122,11 +123,21 @@ class PuzzleStatus
 
   puzzle_finished: () ->
     @puzzle.puzzle_view.draw_photo()
-    alert("Puzzle finished")
 
 
   next_piece: () ->
     @puzzle.mask.reset_mask()
+    @puzzle.indicator.decrement()
+    pc = Math.floor(@pieces_in_puzzle*Math.random())
+    @sym = @unset_pieces[pc]
+    @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
+    @puzzle.piece.construct_piece(@sym)
+
+
+  start_first_piece: () ->
+    @puzzle.colors.new_rotation()
+    @puzzle.indicator.start_indicator()
+    @puzzle.mask.init_missing_pieces_mask()
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
     @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
@@ -137,7 +148,6 @@ class PuzzleStatus
 class PuzzlePattern
 
   constructor: (puzzle_app) ->
-
     @puzzle = puzzle_app
     @hex_draw = @puzzle.hex_draw
     @canvas = document.getElementById("puzzle-widget")
@@ -165,20 +175,10 @@ class MissingPiecesMask
     @puzzle_pattern = @puzzle.puzzle_pattern
     @grid = @puzzle_pattern.grid
     @hex_draw = @puzzle.hex_draw
-    @backgrounds = ["#cc9999","#adcc99","#99c2cc",
-                    "#c299cc","#ccad99","#99cc99",
-                    "#99adcc","#cc99c2","#ccc299",
-                    "#99ccad","#9999cc","#cc99ad",
-                    "#c2cc99","#99ccc2","#ad99cc"]
-
-    @init_missing_pieces_mask()
 
 
   init_missing_pieces_mask: () ->
-    @missing = []
-    @missing[p] = @puzzle.pz_status.all_pieces[p] for p in [0..15]
-    @start_color_cycle()
-    @puzzle.puzzle_view.draw_photo()
+    @reset_mask()
 
 
   reset_mask: () ->
@@ -187,22 +187,8 @@ class MissingPiecesMask
     @draw_mask()
 
 
-  start_color_cycle: () ->
-    if Math.floor(2*Math.random()) > 1
-      @color_direction = "up"
-    else
-      @color_direction = "down"
-    @color_number = Math.floor(15*Math.random())
-    @color = @backgrounds[@color_number]
-
-
   get_next_color: () ->
-    switch @color_direction
-      when "up"
-        if @color_number == 14 then @color_number = 0 else @color_number += 1
-      when "down"
-        if @color_number == 0 then @color_number = 14 else @color_number -= 1
-    @color = @backgrounds[@color_number]
+    @color = @puzzle.colors.next_color()
 
 
   draw_mask: () ->
@@ -214,8 +200,8 @@ class MissingPiecesMask
 
 
 class PuzzlePiece
-  constructor: (puzzle_app) ->
 
+  constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @hex_box = @puzzle.hex_box
     @piece_mask  = new PiecePattern(this)
@@ -259,13 +245,13 @@ class PuzzlePiece
 
   draw_piece_ab: (a,b) ->
     xy = @puzzle.hex_box.get_box_xy_ab(a,b)
-    @redraw.apply_redraw()
-    @redraw.prepare_next_redraw(xy[0],xy[1])
     @draw_piece(xy[0],xy[1])
     @last_rendered_xy = xy
 
 
   draw_piece: (x,y) ->
+    @redraw.apply_redraw()
+    @redraw.prepare_next_redraw(x,y)
     context = @puzzle.puzzle_view.context_canvas
     context.drawImage(@piece_mask.img,x,y)
     @reset_bounding_box(x,y)
@@ -344,7 +330,6 @@ class PieceRedrawBuffer
     @redraw_image.height = 30
     @redraw_x = 0
     @redraw_y = 0
-    @redraw_active = false
 
   reset_size: (x,y) ->
     @width = x
@@ -354,18 +339,15 @@ class PieceRedrawBuffer
 
 
   apply_redraw: () ->
-    if @redraw_active
-      canvas = document.getElementById("puzzle-widget")
-      context = canvas.getContext('2d')
-      context.drawImage(@redraw_image,@redraw_x,@redraw_y)
-      @view.clear_margins()
+    canvas = document.getElementById("puzzle-widget")
+    context = canvas.getContext('2d')
+    context.drawImage(@redraw_image,@redraw_x,@redraw_y)
 
 
   prepare_next_redraw: (x,y) ->
     ctx = @redraw_image.getContext('2d')
     ctx.clearRect(0,0,@width,@height)
     ctx.drawImage(@view.canvas,x,y,@width,@height,0,0,@width,@height)
-    @redraw_active = true
     @redraw_x = x
     @redraw_y =y
 
@@ -374,40 +356,20 @@ class PieceRedrawBuffer
 class PuzzleView
 
   constructor: (puzzle_app) ->
-
     @puzzle = puzzle_app
-
     @photo_picker = new PhotoPicker
     @photo = @photo_picker.pick_new_photo()
-
     @puzzle_xy = [100,30]
-
-    @top_margin = [100,0,384,30]
-    @right_margin = [484,0,36,246]
-    @bottom_margin = [100,246,420,34]
-    @left_margin = [0,0,100,280]
-
-
     @canvas = document.getElementById("puzzle-widget")
     @context_canvas = @canvas.getContext('2d')
+    @context_canvas.fillStyle = "#999999"
+    @context_canvas.fillRect(0,0,520,280)
 
 
   draw_photo: () ->
     @context = @get_drawing_context("canvas")
     @img = document.getElementById(@photo)
     @context.drawImage(@img,@puzzle_xy[0],@puzzle_xy[1])
-
-
-  clear_margins: () ->
-    tp = @top_margin
-    rt = @right_margin
-    bt = @bottom_margin
-    lf = @left_margin
-    @context = @get_drawing_context("canvas")
-    @context.clearRect(tp[0],tp[1],tp[2],tp[3])
-    @context.clearRect(rt[0],rt[1],rt[2],rt[3])
-    @context.clearRect(bt[0],bt[1],bt[2],bt[3])
-    @context.clearRect(lf[0],lf[1],lf[2],lf[3])
 
 
   get_drawing_context: (mode) ->
@@ -419,6 +381,7 @@ class PuzzleView
         else
           context = null
     return context
+
 
 
 class PuzzleGridModel
@@ -601,6 +564,93 @@ class HexBox
       for aa in [1..24]
         hexes.push([aa,bb]) if @puzzle.puzzle_pattern.grid[bb][aa] == piece_symbol
     return hexes
+
+
+
+class Indicator
+
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+
+
+  start_indicator: () ->
+    @canvas = document.getElementById("puzzle-widget")
+    @context = @canvas.getContext('2d')
+    @context.fillStyle = 'black'
+    for p in [16..1]
+      @context.fillStyle = @puzzle.colors.rotation[16-p]
+      xp = 489-17*p
+      yp = 6
+      @context.beginPath()
+      @context.moveTo(xp+5,yp)
+      @context.lineTo(xp+12,yp)
+      @context.lineTo(xp+12,yp+17)
+      @context.lineTo(xp+5,yp+17)
+      @context.lineTo(xp,yp+8)
+      @context.lineTo(xp+5,yp)
+      @context.fill()
+      @context.closePath()
+    @write_message(16)
+
+
+  decrement: () ->
+    @write_message(@puzzle.pz_status.pieces_in_puzzle)
+    console.log(@puzzle.pz_status.pieces_in_puzzle+" Pieces Left")
+
+
+  write_message: (n) ->
+    @canvas = document.getElementById("puzzle-widget")
+    @context = @canvas.getContext('2d')
+    @context.fillStyle = "#999999"
+    @context.fillRect(100,0,115+17*(16-n),30)
+    @context.fillStyle = "#333333"
+    @context.font = "bold 14px sans-serif"
+    @context.textAlign = "left"
+    @context.textbaseline = "top"
+    if n == 1
+      msg = "1 piece left"
+      cx = 374
+    else
+      msg = n.toString() + " pieces left"
+      cx = 100+17*(16-n)
+      cx = cx + 10 if n < 10
+    @context.fillText(msg,cx,20)
+
+
+
+class ColorRotation
+
+  constructor: (puzzle_app) ->
+    @puzzle = puzzle_app
+    @app_colors = ["#cc9999","#a0cc99","#99a6cc","#cc99ad",
+                   "#b3cc99","#99b9cc","#cc99bf","#c6cc99",
+                   "#99cccc","#c599cc","#ccbf99","#99ccb8",
+                   "#b399cc","#ccac99","#99cca6","#9f99cc"]
+
+
+  new_rotation: () ->
+    if Math.floor(2*Math.random()) > 1
+      @color_direction = "up"
+    else
+      @color_direction = "down"
+    @start_number = Math.floor(16*Math.random())
+    @rotation = @build_rotation()
+
+
+  build_rotation: () ->
+    rr = []
+    rr.push(@app_colors[i]) for i in [@start_number..15]
+    rr.push(@app_colors[i]) for i in [0..@start_number-1] if @start_number > 0
+    rr = rr.reverse() if @color_direction == "down"
+    console.log(color) for color in rr
+    return rr
+
+
+  next_color: () ->
+    if @rotation.length > 0
+      return @rotation.shift()
+    else
+      return "#333333"
 
 
 
