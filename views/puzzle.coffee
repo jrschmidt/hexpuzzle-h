@@ -23,6 +23,7 @@ class EventHandler
 
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
+    @pz_status = @puzzle.pz_status
     @ui_status = @puzzle.ui_status
 
 
@@ -35,10 +36,13 @@ class EventHandler
     x = px-dx
     y = py-dy
 
-    if @puzzle.piece.in_bounding_box(x,y)
-      @ui_status.activate_piece_drag()
-      @puzzle.hex_box.get_anchor_to_dragpoint(x,y)
-      mouse_hex = @puzzle.grid_model.get_hex(x,y)
+    if @pz_status.finished == true
+      @pz_status.start_new_puzzle()
+    else
+      if @puzzle.piece.in_bounding_box(x,y)
+        @ui_status.activate_piece_drag()
+        @puzzle.hex_box.get_anchor_to_dragpoint(x,y)
+        mouse_hex = @puzzle.grid_model.get_hex(x,y)
 
 
   handle_mouseup: (e) ->
@@ -72,6 +76,8 @@ class UiStatus
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
 
+
+  reset: () ->
     @drag_active = false
     @mouse_on_hex = false
     @active_hex = [99,99]
@@ -101,13 +107,16 @@ class PuzzleStatus
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @all_pieces = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
-    @pieces_in_puzzle = 16
 
 
   start_new_puzzle: () ->
+    @finished = false
     @unset_pieces = []
     @unset_pieces[p] = @puzzle.pz_status.all_pieces[p] for p in [0..15]
+    @pieces_in_puzzle = 16
     @pieces_set = 0
+    @puzzle.ui_status.reset()
+    @puzzle.puzzle_view.reset()
     @start_first_piece()
 
 
@@ -123,6 +132,7 @@ class PuzzleStatus
 
   puzzle_finished: () ->
     @puzzle.puzzle_view.draw_photo()
+    @finished = true
 
 
   next_piece: () ->
@@ -151,7 +161,7 @@ class PuzzlePattern
     @puzzle = puzzle_app
     @hex_draw = @puzzle.hex_draw
     @canvas = document.getElementById("puzzle-widget")
-    @dstring = @canvas.getAttribute("data-puzzle-pattern")
+    @dstring = @canvas.getAttribute("data-puzzle-pattern") # TODO This needs to be changed to get NEW pattern from server when there is a new puzzle.
     @grid = @get_pattern_grid(@dstring)
 
 
@@ -360,6 +370,10 @@ class PuzzleView
     @photo_picker = new PhotoPicker
     @photo = @photo_picker.pick_new_photo()
     @puzzle_xy = [100,30]
+    @reset()
+
+
+  reset: () ->
     @canvas = document.getElementById("puzzle-widget")
     @context_canvas = @canvas.getContext('2d')
     @context_canvas.fillStyle = "#999999"
