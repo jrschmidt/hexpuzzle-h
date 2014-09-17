@@ -1,3 +1,20 @@
+##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##
+#    Completion Punch List:
+
+# >> Get different photo for next puzzle.
+
+# >> Get different puzzle pattern for next puzzle.
+
+# >> Don't let middle pieces be selected until a piece that borders them is set.
+
+# >> Ignore out of range mouseover without throwing errors or generating snags.
+
+# >> Fix dropping of puzzle piece for certain conditions when dragging in left margin.
+
+# >> Change indicator to clear and say "Click anywhere for next puzzle" when puzzle_finished() method is run.
+
+##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##
+
 class PuzzleApp
 
   constructor: () ->
