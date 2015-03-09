@@ -22,6 +22,24 @@ get '/javascripts/puzzle.js' do
 end
 
 
+# before 'pz-photo.png' do
+#   photo_nums = ["005","033","143","156","165",
+#                 "223","237","298","384","418",
+#                 "476","531","547","636","661",
+#                 "729","781","790","792","800",
+#                 "808","813","820","831","836",
+#                 "849","860","876"]
+#   num = photo_nums.sample
+#   @photo = "/photos/hx#{num}.png"
+#   puts " ** before 'get pz-photo.png': filename = #{@photo}"
+# end
+
+
+get '/pz-photo' do
+  send_file 'hx418.png'
+  # send_file 'hx418.png', :filename => 'hx418', :type => :png
+end
+
 
 class PuzzlePattern
 
@@ -133,9 +151,9 @@ class PuzzlePattern
       if not (sizes[r6] == 15 || sizes[r6+10] == 15)
         r2 = rand(2)
         sizes[r6+10*r2] = 15
-        fifteens = fifteens+1      
+        fifteens = fifteens+1
       end
-    end    
+    end
     sizes
   end
 
@@ -159,4 +177,3 @@ def puzzle_string
   @puzzle = PuzzlePattern.new
   @puzzle.to_dom_string
 end
-

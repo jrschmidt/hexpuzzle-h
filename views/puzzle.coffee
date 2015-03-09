@@ -1,20 +1,3 @@
-##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##
-#    Completion Punch List:
-
-# >> Get different photo for next puzzle.
-
-# >> Get different puzzle pattern for next puzzle.
-
-# >> Don't let middle pieces be selected until a piece that borders them is set.
-
-# >> Ignore out of range mouseover without throwing errors or generating snags.
-
-# >> Fix dropping of puzzle piece for certain conditions when dragging in left margin.
-
-# >> Change indicator to clear and say "Click anywhere for next puzzle" when puzzle_finished() method is run.
-
-##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##   ##
-
 class PuzzleApp
 
   constructor: () ->
@@ -385,7 +368,7 @@ class PuzzleView
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @photo_picker = new PhotoPicker
-    @photo = @photo_picker.pick_new_photo()
+    @photo = @photo_picker.get_new_photo()
     @puzzle_xy = [100,30]
     @reset()
 
@@ -626,7 +609,7 @@ class Indicator
 
   decrement: () ->
     @write_message(@puzzle.pz_status.pieces_in_puzzle)
-    console.log(@puzzle.pz_status.pieces_in_puzzle+" Pieces Left")
+    # console.log(@puzzle.pz_status.pieces_in_puzzle+" Pieces Left")
 
 
   write_message: (n) ->
@@ -673,7 +656,7 @@ class ColorRotation
     rr.push(@app_colors[i]) for i in [@start_number..15]
     rr.push(@app_colors[i]) for i in [0..@start_number-1] if @start_number > 0
     rr = rr.reverse() if @color_direction == "down"
-    console.log(color) for color in rr
+    # console.log(color) for color in rr
     return rr
 
 
@@ -687,18 +670,13 @@ class ColorRotation
 
 class PhotoPicker
 
-  constructor: () ->
-    @photo_list = ["hx005","hx033","hx143","hx156","hx165",
-                   "hx223","hx237","hx298","hx384","hx418",
-                   "hx476","hx531","hx547","hx636","hx661",
-                   "hx729","hx781","hx790","hx792","hx800",
-                   "hx808","hx813","hx820","hx831","hx836",
-                   "hx849","hx860","hx876"]
+  get_new_photo: () ->
+    ph = new Image()
+    ph.src = '/pz-photo'
 
 
   pick_new_photo: () ->
-    photo_number = Math.floor((@photo_list.length)*Math.random())
-    return @photo_list[photo_number]
+    return "hx418"
 
 
 
@@ -724,5 +702,3 @@ start = () ->
 
 
 window.onload = start
-
-
