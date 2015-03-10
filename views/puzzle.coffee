@@ -244,7 +244,7 @@ class PuzzlePiece
     xx = @hex_box.box_xy[0] - @puzzle.puzzle_view.puzzle_xy[0]
     yy = @hex_box.box_xy[1] - @puzzle.puzzle_view.puzzle_xy[1]
 
-    photo = document.getElementById(@puzzle.puzzle_view.photo)
+    photo = @puzzle.puzzle_view.photo
     @photo_clip_context.drawImage(photo,xx,yy,@hex_box.width,@hex_box.height,0,0,@hex_box.width,@hex_box.height)
 
     context = @piece_mask.piece_mask_context
@@ -367,10 +367,12 @@ class PuzzleView
 
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
-    @photo_picker = new PhotoPicker
-    @photo = @photo_picker.get_new_photo()
     @puzzle_xy = [100,30]
     @reset()
+    @photo = new Image()
+    @photo.onload = =>
+      @draw_photo()
+    @photo.src = '/pz-photo'
 
 
   reset: () ->
@@ -382,8 +384,7 @@ class PuzzleView
 
   draw_photo: () ->
     @context = @get_drawing_context("canvas")
-    @img = document.getElementById(@photo)
-    @context.drawImage(@img,@puzzle_xy[0],@puzzle_xy[1])
+    @context.drawImage(@photo,@puzzle_xy[0],@puzzle_xy[1])
 
 
   get_drawing_context: (mode) ->
@@ -665,18 +666,6 @@ class ColorRotation
       return @rotation.shift()
     else
       return "#333333"
-
-
-
-class PhotoPicker
-
-  get_new_photo: () ->
-    ph = new Image()
-    ph.src = '/pz-photo'
-
-
-  pick_new_photo: () ->
-    return "hx418"
 
 
 

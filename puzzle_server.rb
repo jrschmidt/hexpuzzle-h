@@ -22,22 +22,27 @@ get '/javascripts/puzzle.js' do
 end
 
 
-# before 'pz-photo.png' do
-#   photo_nums = ["005","033","143","156","165",
-#                 "223","237","298","384","418",
-#                 "476","531","547","636","661",
-#                 "729","781","790","792","800",
-#                 "808","813","820","831","836",
-#                 "849","860","876"]
-#   num = photo_nums.sample
-#   @photo = "/photos/hx#{num}.png"
-#   puts " ** before 'get pz-photo.png': filename = #{@photo}"
-# end
+before '/pz-photo' do
+  photo_nums = ["005","033","143","156","165",
+                "223","237","298","384","418",
+                "476","531","547","636","661",
+                "729","781","790","792","800",
+                "808","813","820","831","836",
+                "849","860","876"]
+  num = photo_nums.sample
+  # @photo_name = "/photos/hx#{num}.png"
+  @photo_name = "hx#{num}.png"
+  puts " ** before 'get pz-photo.png': filename = #{@photo_name}"
+end
 
 
 get '/pz-photo' do
-  send_file 'hx418.png'
-  # send_file 'hx418.png', :filename => 'hx418', :type => :png
+  # send_file 'hx418.png'
+  puts " "
+  puts "**** get '/pz-photo'"
+  puts "     filename = #{@photo_name}"
+  puts " "
+  send_file @photo_name, :filename => @photo_name, :type => :png
 end
 
 
