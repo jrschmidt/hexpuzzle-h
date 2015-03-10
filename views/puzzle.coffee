@@ -11,7 +11,7 @@ class PuzzleApp
     @grid_model = new PuzzleGridModel(this)
     @hex_draw = new HexDraw(this)
     @hex_box = new HexBox(this)
-    get_puzzle_pattern()
+    get_puzzle_pattern(this)
 
 
 
@@ -143,7 +143,7 @@ class PuzzleStatus
   start_first_piece: () ->
     @puzzle.colors.new_rotation()
     @puzzle.indicator.start_indicator()
-    @puzzle.mask.init_missing_pieces_mask()
+    # @puzzle.mask.init_missing_pieces_mask()
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
     @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
@@ -153,15 +153,16 @@ class PuzzleStatus
 
 class MissingPiecesMask
 
-  constructor: (puzzle_app) ->
+  constructor: (puzzle_app, grid) ->
     @puzzle = puzzle_app
     @puzzle_pattern = @puzzle.puzzle_pattern
-    @grid = @puzzle_pattern.grid
+    @grid = grid
+    @reset_mask()
     @hex_draw = @puzzle.hex_draw
 
 
-  init_missing_pieces_mask: () ->
-    @reset_mask()
+  # init_missing_pieces_mask: () ->
+  #   @reset_mask()
 
 
   reset_mask: () ->
@@ -635,6 +636,7 @@ class ColorRotation
 
 
   next_color: () ->
+    @rotation = @build_rotation if @rotation == undefined
     if @rotation.length > 0
       return @rotation.shift()
     else
@@ -648,18 +650,18 @@ class ColorRotation
 
 
 @mousedown = (e) ->
-  @app.events.handle_mousedown(e)
+  app.events.handle_mousedown(e)
 
 
 @mouseup = (e) ->
-  @app.events.handle_mouseup(e)
+  app.events.handle_mouseup(e)
 
 
 @mousemove = (e) ->
-  @app.events.handle_mousemove(e)
+  app.events.handle_mousemove(e)
 
 
-get_puzzle_pattern = () ->
+get_puzzle_pattern = (app) ->
   xhr = new XMLHttpRequest()
   url = "/puzzle-pattern"
   xhr.open('GET',url)
@@ -669,9 +671,9 @@ get_puzzle_pattern = () ->
       response = JSON.parse(msg_in)
       @pstring = response.pstring
       grid = get_pattern_grid(@pstring)
-      # @mask = new MissingPiecesMask(this)
-      # @piece = new PuzzlePiece(this)
-      # @pz_status.start_new_puzzle()
+      @mask = new MissingPiecesMask(app, grid)
+      @piece = new PuzzlePiece(app)
+      app.pz_status.start_new_puzzle()
   xhr.send()
 
 
@@ -689,7 +691,7 @@ get_pattern_grid = (data_string) ->
 
 
 start = () ->
-  @app = new PuzzleApp()
+  app = new PuzzleApp()
 
 
 window.onload = start
