@@ -11,11 +11,7 @@ class PuzzleApp
     @grid_model = new PuzzleGridModel(this)
     @hex_draw = new HexDraw(this)
     @hex_box = new HexBox(this)
-    @puzzle_pattern = new PuzzlePattern(this)
-    @mask = new MissingPiecesMask(this)
-    @piece = new PuzzlePiece(this)
-
-    @pz_status.start_new_puzzle()
+    get_puzzle_pattern()
 
 
 
@@ -111,7 +107,7 @@ class PuzzleStatus
 
   start_new_puzzle: () ->
     @finished = false
-    @unset_pieces = []
+    @unset_pieces = [] # FIXME Change to all_pieces.clone()
     @unset_pieces[p] = @puzzle.pz_status.all_pieces[p] for p in [0..15]
     @pieces_in_puzzle = 16
     @pieces_set = 0
@@ -152,29 +148,6 @@ class PuzzleStatus
     @sym = @unset_pieces[pc]
     @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
     @puzzle.piece.construct_piece(@sym)
-
-
-
-class PuzzlePattern
-
-  constructor: (puzzle_app) ->
-    @puzzle = puzzle_app
-    @hex_draw = @puzzle.hex_draw
-    @canvas = document.getElementById("puzzle-widget")
-    @dstring = @canvas.getAttribute("data-puzzle-pattern") # TODO This needs to be changed to get NEW pattern from server when there is a new puzzle.
-    @grid = @get_pattern_grid(@dstring)
-
-
-  get_pattern_grid: (data_string) ->
-    grid = []
-    n = 0
-    for row in [1..10]
-      grid[row] = []
-      for col in [1..24]
-        ch = @dstring[n]
-        grid[row][col] = ch
-        n = n+1
-    return grid
 
 
 
@@ -684,6 +657,35 @@ class ColorRotation
 
 @mousemove = (e) ->
   @app.events.handle_mousemove(e)
+
+
+get_puzzle_pattern = () ->
+  xhr = new XMLHttpRequest()
+  url = "/puzzle-pattern"
+  xhr.open('GET',url)
+  xhr.onreadystatechange = ->
+    if (xhr.readyState == 4 && xhr.status == 200)
+      msg_in = xhr.responseText
+      response = JSON.parse(msg_in)
+      @pstring = response.pstring
+      grid = get_pattern_grid(@pstring)
+      # @mask = new MissingPiecesMask(this)
+      # @piece = new PuzzlePiece(this)
+      # @pz_status.start_new_puzzle()
+  xhr.send()
+
+
+get_pattern_grid = (data_string) ->
+  grid = []
+  n = 0
+  for row in [1..10]
+    grid[row] = []
+    for col in [1..24]
+      ch = data_string[n]
+      grid[row][col] = ch
+      n = n+1
+  return grid
+
 
 
 start = () ->

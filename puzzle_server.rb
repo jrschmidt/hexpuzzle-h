@@ -5,6 +5,8 @@ require 'sinatra'
 
 require 'coffee-script'
 
+require 'json'
+
 require 'pry'
 
 set :server, %w[webrick thin mongrel]
@@ -19,6 +21,14 @@ end
 
 get '/javascripts/puzzle.js' do
   coffee :puzzle
+end
+
+
+get '/puzzle-pattern' do
+  @puzzle = PuzzlePattern.new
+  pz = @puzzle.to_puzzle_string
+  pz_obj = {pstring: pz}
+  return pz_obj.to_json
 end
 
 
@@ -168,7 +178,7 @@ class PuzzlePattern
   end
 
 
-  def to_dom_string
+  def to_puzzle_string
     str = ""
     @grid.each {|row| row.each {|hx| str << hx.to_s} }
     str
