@@ -199,7 +199,7 @@ class PuzzlePiece
 
   construct_piece: (sym) ->
     @sym = sym
-    @hexes = @pattern.get_hexes()
+    @hexes = @get_hexes()
     @hex_box.set_hex_box(sym)
     wd_ht = @hex_box.get_box_size()
     @width = wd_ht[0]
@@ -208,6 +208,14 @@ class PuzzlePiece
     @pattern.draw_piece_pattern()
     @cut_piece_from_photo()
     @draw_piece_ab(-7,5)
+
+
+  get_hexes: () ->
+    hexes = []
+    for bb in [1..10]
+      for aa in [1..24]
+        hexes.push([aa,bb]) if @puzzle.grid[bb][aa] == @sym
+    return hexes
 
 
   cut_piece_from_photo: () ->
@@ -302,14 +310,6 @@ class PiecePattern
       if aa%2 != anchor_a%2
         if anchor_a%2 == 0 then yy = yy+10 else yy = yy-10
       @hex_draw.fill_hex_xy(xx,yy,"#000000")
-
-
-  get_hexes: () ->
-    hexes = []
-    for bb in [1..10]
-      for aa in [1..24]
-        hexes.push([aa,bb]) if @grid[bb][aa] == @sym
-    return hexes
 
 
 
@@ -681,8 +681,8 @@ get_puzzle_pattern = (app) ->
       msg_in = xhr.responseText
       response = JSON.parse(msg_in)
       @pstring = response.pstring
-      grid = get_pattern_grid(@pstring)
-      @mask = new MissingPiecesMask(app, grid)
+      app.grid = get_pattern_grid(@pstring)
+      @mask = new MissingPiecesMask(app, app.grid)
       app.piece.construct_piece()
       app.pz_status.start_new_puzzle()
   xhr.send()
