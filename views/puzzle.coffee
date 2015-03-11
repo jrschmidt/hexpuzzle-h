@@ -9,8 +9,8 @@ class PuzzleApp
     @colors = new ColorRotation
     @indicator = new Indicator(this)
     @grid_model = new PuzzleGridModel(this)
-    @hex_draw = new HexDraw(this)
     @hex_box = new HexBox(this)
+    @hex_draw = new HexDraw(this)
     get_puzzle_pattern(this)
 
 
@@ -103,12 +103,17 @@ class PuzzleStatus
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @all_pieces = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
+    @unset_pieces = [] # FIXME Change to all_pieces.clone()
+    @unset_pieces[p] = @all_pieces[p] for p in [0..15]
+    # @unset_pieces = [] # FIXME Change to all_pieces.clone()
+    # @unset_pieces[p] = @puzzle.pz_status.all_pieces[p] for p in [0..15]
+    # @pieces_in_puzzle = 16
 
 
   start_new_puzzle: () ->
     @finished = false
     @unset_pieces = [] # FIXME Change to all_pieces.clone()
-    @unset_pieces[p] = @puzzle.pz_status.all_pieces[p] for p in [0..15]
+    @unset_pieces[p] = @all_pieces[p] for p in [0..15]
     @pieces_in_puzzle = 16
     @pieces_set = 0
     @puzzle.ui_status.reset()
@@ -157,18 +162,15 @@ class MissingPiecesMask
     @puzzle = puzzle_app
     @puzzle_pattern = @puzzle.puzzle_pattern
     @grid = grid
-    @reset_mask()
     @hex_draw = @puzzle.hex_draw
-
-
-  # init_missing_pieces_mask: () ->
-  #   @reset_mask()
-
+    @reset_mask()
 
   reset_mask: () ->
+    console.log " BEGIN  MissingPiecesMask#reset_mask()"
     @puzzle.puzzle_view.draw_photo()
     @get_next_color()
     @draw_mask()
+    console.log " END    MissingPiecesMask#reset_mask()"
 
 
   get_next_color: () ->
