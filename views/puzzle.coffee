@@ -6,11 +6,11 @@ class PuzzleApp
     @events = new EventHandler(this)
 
     @puzzle_view = new PuzzleView(this)
+    @hex_box = new HexBox(this)
     @piece = new PuzzlePiece(this)
     @colors = new ColorRotation
     @indicator = new Indicator(this)
     @grid_model = new PuzzleGridModel(this)
-    @hex_box = new HexBox(this)
     @hex_draw = new HexDraw(this)
     get_puzzle_pattern(this)
 
@@ -562,7 +562,7 @@ class HexBox
     hexes = []
     for bb in [1..10]
       for aa in [1..24]
-        hexes.push([aa,bb]) if @puzzle.puzzle_pattern.grid[bb][aa] == piece_symbol
+        hexes.push([aa,bb]) if @puzzle.grid[bb][aa] == piece_symbol
     return hexes
 
 
