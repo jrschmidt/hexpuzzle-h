@@ -6,6 +6,7 @@ class PuzzleApp
     @events = new EventHandler(this)
 
     @puzzle_view = new PuzzleView(this)
+    @piece = new PuzzlePiece(this)
     @colors = new ColorRotation
     @indicator = new Indicator(this)
     @grid_model = new PuzzleGridModel(this)
@@ -190,7 +191,7 @@ class PuzzlePiece
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @hex_box = @puzzle.hex_box
-    @piece_mask  = new PiecePattern(this)
+    @pattern  = new PiecePattern(this)
     @redraw = new PieceRedrawBuffer(this)
     @hexes = []
     @bounding_box = [0,0,0,0,]
@@ -198,13 +199,13 @@ class PuzzlePiece
 
   construct_piece: (sym) ->
     @sym = sym
-    @hexes = @get_hexes()
+    @hexes = @pattern.get_hexes()
     @hex_box.set_hex_box(sym)
     wd_ht = @hex_box.get_box_size()
     @width = wd_ht[0]
     @height = wd_ht[1]
     @redraw.reset_size(@width,@height)
-    @piece_mask.draw_piece_pattern()
+    @pattern.draw_piece_pattern()
     @cut_piece_from_photo()
     @draw_piece_ab(-7,5)
 
@@ -261,13 +262,13 @@ class PuzzlePiece
     if x>@left && x<@right && y>@top && y<@bottom then return true else return false
 
 
-  # TODO Does this method belong in PuzzlePattern class?
-  get_hexes: () ->
-    hexes = []
-    for bb in [1..10]
-      for aa in [1..24]
-        hexes.push([aa,bb]) if @puzzle.puzzle_pattern.grid[bb][aa] == @sym
-    return hexes
+  # TODO Does this method belong in PiecePattern class?
+  # get_hexes: () ->
+  #   hexes = []
+  #   for bb in [1..10]
+  #     for aa in [1..24]
+  #       hexes.push([aa,bb]) if @puzzle.puzzle_pattern.grid[bb][aa] == @sym
+  #   return hexes
 
 
 
@@ -301,6 +302,14 @@ class PiecePattern
       if aa%2 != anchor_a%2
         if anchor_a%2 == 0 then yy = yy+10 else yy = yy-10
       @hex_draw.fill_hex_xy(xx,yy,"#000000")
+
+
+  get_hexes: () ->
+    hexes = []
+    for bb in [1..10]
+      for aa in [1..24]
+        hexes.push([aa,bb]) if @grid[bb][aa] == @sym
+    return hexes
 
 
 
@@ -674,7 +683,7 @@ get_puzzle_pattern = (app) ->
       @pstring = response.pstring
       grid = get_pattern_grid(@pstring)
       @mask = new MissingPiecesMask(app, grid)
-      @piece = new PuzzlePiece(app)
+      app.piece.construct_piece()
       app.pz_status.start_new_puzzle()
   xhr.send()
 
