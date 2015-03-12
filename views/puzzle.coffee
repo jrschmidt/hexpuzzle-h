@@ -189,9 +189,11 @@ class MissingPiecesMask
 class PuzzlePiece
 
   constructor: (puzzle_app) ->
+    console.log "PuzzlePiece constructor"
     @puzzle = puzzle_app
     @hex_box = @puzzle.hex_box
     @pattern  = new PiecePattern(this)
+    console.log "    @pattern.img.id = #{@pattern.img.id}"
     @redraw = new PieceRedrawBuffer(this)
     @hexes = []
     @bounding_box = [0,0,0,0,]
@@ -311,6 +313,7 @@ class PiecePattern
       yy = anchor_y + (bb - anchor_b) * 20
       if aa%2 != anchor_a%2
         if anchor_a%2 == 0 then yy = yy+10 else yy = yy-10
+      @hex_draw.set_context2(@img)
       @hex_draw.fill_hex_xy(xx,yy,"#000000")
 
 
@@ -377,11 +380,9 @@ class PuzzleView
   get_drawing_context: (mode) ->
     switch mode
       when "canvas" then context = @context_canvas
-      when "piece_mask"
-        if @puzzle.piece
-          context = @puzzle.piece.piece_mask.img.getContext('2d')
-        else
-          context = null
+      when "piece-mask"
+        pm_img = document.getElementById("piece-mask")
+        context = pm_img.getContext('2d')
     return context
 
 
@@ -431,8 +432,14 @@ class HexDraw
 
 
   set_context: (mode) ->
+    console.log "CALL set_context()  mode = #{mode}"
     @mode = mode
     @context = @puzzle_view.get_drawing_context(mode)
+
+
+  set_context2: (img) ->
+    console.log "CALL set_context2()  img.id = #{img.id}"
+    @context = img.getContext('2d')
 
 
   get_hex_xy: (a,b) ->
