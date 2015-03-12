@@ -235,9 +235,9 @@ class PuzzlePiece
     photo = @puzzle.puzzle_view.photo
     @photo_clip_context.drawImage(photo,xx,yy,@hex_box.width,@hex_box.height,0,0,@hex_box.width,@hex_box.height)
 
-    @mask = new MissingPiecesMask(app, app.grid)
-    pm_img = document.getElementById("piece-mask")
-    context = pm_img.getContext('2d')
+    @mask = new MissingPiecesMask(@puzzle, @puzzle.grid)
+    # pm_img = document.getElementById("piece-mask")
+    context = @pattern.img.getContext('2d')
     context.globalCompositeOperation = 'source-atop'
     context.drawImage(@photo_clip,0,0)
     context.globalCompositeOperation = 'source-over'
@@ -253,7 +253,7 @@ class PuzzlePiece
     @redraw.apply_redraw()
     @redraw.prepare_next_redraw(x,y)
     context = @puzzle.puzzle_view.context_canvas
-    context.drawImage(@piece_mask.img,x,y)
+    context.drawImage(@pattern.img,x,y)
     @reset_bounding_box(x,y)
 
 
