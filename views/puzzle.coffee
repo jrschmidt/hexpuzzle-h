@@ -12,6 +12,7 @@ class PuzzleApp
     @colors = new ColorRotation
     @indicator = new Indicator(this)
     @grid_model = new PuzzleGridModel(this)
+    @mask = new MissingPiecesMask(this)
     get_puzzle_pattern(this)
 
 
@@ -117,6 +118,8 @@ class PuzzleStatus
     @unset_pieces[p] = @all_pieces[p] for p in [0..15]
     @pieces_in_puzzle = 16
     @pieces_set = 0
+    console.log "CALL reset_mask() from start_new_puzzle"
+    @puzzle.mask.reset_mask(@puzzle.grid)
     @puzzle.ui_status.reset()
     @puzzle.puzzle_view.reset()
     @start_first_piece()
@@ -138,7 +141,8 @@ class PuzzleStatus
 
 
   next_piece: () ->
-    @puzzle.mask.reset_mask()
+    console.log "CALL reset_mask() from next_piece"
+    @puzzle.mask.reset_mask(@puzzle.grid)
     @puzzle.indicator.decrement()
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
@@ -159,18 +163,21 @@ class PuzzleStatus
 
 class MissingPiecesMask
 
-  constructor: (puzzle_app, grid) ->
+  constructor: (puzzle_app) ->
+  # constructor: (puzzle_app, grid) ->
     @puzzle = puzzle_app
     @puzzle_pattern = @puzzle.puzzle_pattern
-    @grid = grid
+    # @grid = grid
     @hex_draw = @puzzle.hex_draw
-    @reset_mask()
+    # @reset_mask()
 
-  reset_mask: () ->
+  reset_mask: (grid) ->
     console.log " BEGIN  MissingPiecesMask#reset_mask()"
+    console.log "    grid size = #{grid.length}"
     @puzzle.puzzle_view.draw_photo()
+    @grid = grid
     @get_next_color()
-    @draw_mask()
+    @draw_mask(grid)
     console.log " END    MissingPiecesMask#reset_mask()"
 
 
@@ -178,11 +185,13 @@ class MissingPiecesMask
     @color = @puzzle.colors.next_color()
 
 
-  draw_mask: () ->
+  draw_mask: (grid) ->
+    console.log "     draw_mask() called from reset_mask()"
+    console.log "        grid size = #{grid.length}"
     @hex_draw.set_context("canvas")
     for bb in [1..10]
       for aa in [1..24]
-        @hex_draw.fill_hex_ab(aa,bb,@color) if @grid[bb][aa] in @puzzle.pz_status.unset_pieces
+        @hex_draw.fill_hex_ab(aa,bb,@color) if grid[bb][aa] in @puzzle.pz_status.unset_pieces
 
 
 
@@ -235,7 +244,9 @@ class PuzzlePiece
     photo = @puzzle.puzzle_view.photo
     @photo_clip_context.drawImage(photo,xx,yy,@hex_box.width,@hex_box.height,0,0,@hex_box.width,@hex_box.height)
 
-    @mask = new MissingPiecesMask(@puzzle, @puzzle.grid)
+    console.log "CALL reset_mask() from cut_piece_from_photo"
+    @puzzle.mask.reset_mask(@puzzle.grid)
+    # @mask = new MissingPiecesMask(@puzzle, @puzzle.grid)
     # pm_img = document.getElementById("piece-mask")
     context = @pattern.img.getContext('2d')
     context.globalCompositeOperation = 'source-atop'
@@ -671,15 +682,15 @@ class ColorRotation
 
 
 @mousedown = (e) ->
-  app.events.handle_mousedown(e)
+  @app.events.handle_mousedown(e)
 
 
 @mouseup = (e) ->
-  app.events.handle_mouseup(e)
+  @app.events.handle_mouseup(e)
 
 
 @mousemove = (e) ->
-  app.events.handle_mousemove(e)
+  @app.events.handle_mousemove(e)
 
 
 get_puzzle_pattern = (app) ->
@@ -710,7 +721,7 @@ get_pattern_grid = (data_string) ->
 
 
 start = () ->
-  app = new PuzzleApp()
+  @app = new PuzzleApp()
 
 
 window.onload = start
