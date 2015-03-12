@@ -7,11 +7,11 @@ class PuzzleApp
 
     @puzzle_view = new PuzzleView(this)
     @hex_box = new HexBox(this)
+    @hex_draw = new HexDraw(this)
     @piece = new PuzzlePiece(this)
     @colors = new ColorRotation
     @indicator = new Indicator(this)
     @grid_model = new PuzzleGridModel(this)
-    @hex_draw = new HexDraw(this)
     get_puzzle_pattern(this)
 
 
@@ -198,6 +198,7 @@ class PuzzlePiece
 
 
   construct_piece: (sym) ->
+    console.log "PuzzlePiece construct_piece() sym = #{sym}"
     @sym = sym
     @hexes = @get_hexes()
     @hex_box.set_hex_box(sym)
@@ -232,7 +233,9 @@ class PuzzlePiece
     photo = @puzzle.puzzle_view.photo
     @photo_clip_context.drawImage(photo,xx,yy,@hex_box.width,@hex_box.height,0,0,@hex_box.width,@hex_box.height)
 
-    context = @piece_mask.piece_mask_context
+    @mask = new MissingPiecesMask(app, app.grid)
+    pm_img = document.getElementById("piece-mask")
+    context = pm_img.getContext('2d')
     context.globalCompositeOperation = 'source-atop'
     context.drawImage(@photo_clip,0,0)
     context.globalCompositeOperation = 'source-over'
@@ -296,12 +299,11 @@ class PiecePattern
     @img.width = @hex_box.width
     @img.height = @hex_box.height
     @hexes = @piece.hexes
-    @hex_draw.set_context("piece_mask")
+    context = @img.getContext('2d')
     anchor_a = @hex_box.anchor_hex[0]
     anchor_b = @hex_box.anchor_hex[1]
     anchor_x = 0
     if @hex_box.corner_fit == "high" then anchor_y = 0 else anchor_y = 10
-
     for hx in @hexes
       aa = hx[0]
       bb = hx[1]
@@ -471,6 +473,7 @@ class HexBox
 
 
   set_hex_box: (piece_symbol) ->
+    console.log "HexBox set_hex_box() piece_symbol = #{piece_symbol}"
     @reset_hexes(@get_hexes(piece_symbol))
     @get_box_metrics()
 
@@ -682,8 +685,6 @@ get_puzzle_pattern = (app) ->
       response = JSON.parse(msg_in)
       @pstring = response.pstring
       app.grid = get_pattern_grid(@pstring)
-      @mask = new MissingPiecesMask(app, app.grid)
-      app.piece.construct_piece()
       app.pz_status.start_new_puzzle()
   xhr.send()
 
