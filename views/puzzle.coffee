@@ -109,7 +109,12 @@ class PuzzleStatus
 
   start_new_puzzle: () ->
     @finished = false
-    @unset_pieces = @all_pieces.slice(0, 15)
+    @unset_pieces = @all_pieces.slice(0, 16)
+    console.log "start_new_puzzle()"
+    up = ""
+    @unset_pieces.forEach (pcc) ->
+      up = up + pcc
+    console.log "   @unset_pieces = #{up}"
     @pieces_in_puzzle = 16
     @pieces_set = 0
     @puzzle.mask.reset_mask(@puzzle.grid)
@@ -119,9 +124,13 @@ class PuzzleStatus
 
 
   set_piece: () ->
+    console.log " "
+    console.log "set_piece()"
     @puzzle.ui_status.terminate_piece_drag()
     @pieces_set += 1
     @pieces_in_puzzle -= 1
+    console.log "   pieces_set = #{@pieces_set}"
+    console.log "   pieces_in_puzzle = #{@pieces_in_puzzle}"
     if @pieces_set == 16
       @puzzle_finished()
     else
@@ -133,12 +142,21 @@ class PuzzleStatus
     @finished = true
 
 
+
   next_piece: () ->
     @puzzle.mask.reset_mask(@puzzle.grid)
     @puzzle.indicator.decrement()
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
     @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
+    console.log " "
+    console.log "next_piece()"
+    console.log "   sym = #{@sym}"
+    console.log "   pc = #{pc}"
+    up = ""
+    @unset_pieces.forEach (pcc) ->
+      up = up + pcc
+    console.log "   @unset_pieces = #{up}"
     @puzzle.piece.construct_piece(@sym)
 
 
@@ -148,6 +166,14 @@ class PuzzleStatus
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
     @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
+    up = ""
+    @unset_pieces.forEach (pcc) ->
+      up = up + pcc
+    console.log " "
+    console.log "start_first_piece()"
+    console.log "   @unset_pieces = #{up}"
+    console.log "   sym = #{@sym}"
+    console.log "   pc = #{pc}"
     @puzzle.piece.construct_piece(@sym)
 
 
@@ -221,6 +247,10 @@ class PuzzlePiece
     xx = @hex_box.box_xy[0] - @puzzle.puzzle_view.puzzle_xy[0]
     yy = @hex_box.box_xy[1] - @puzzle.puzzle_view.puzzle_xy[1]
     photo = @puzzle.puzzle_view.photo
+    console.log "xx is negative" if xx < 0
+    console.log "yy is negative" if yy < 0
+    console.log "@hex_box.width is negative" if @hex_box.width < 0
+    console.log "@hex_box.height is negative" if @hex_box.height < 0
     @photo_clip_context.drawImage(photo,xx,yy,@hex_box.width,@hex_box.height,0,0,@hex_box.width,@hex_box.height)
     @puzzle.mask.reset_mask(@puzzle.grid)
     context = @pattern.img.getContext('2d')
@@ -463,7 +493,12 @@ class HexBox
 
 
   set_hex_box: (piece_symbol) ->
+    console.log " "
+    console.log "set_hex_box()"
+    console.log "   symbol = #{piece_symbol}"
     @reset_hexes(@get_hexes(piece_symbol))
+    console.log "   after reset_hexes():"
+    console.log "      hexes.length = #{@hexes.length}"
     @get_box_metrics()
 
 
@@ -472,6 +507,7 @@ class HexBox
 
 
   get_box_metrics: () ->
+    console.log "   get_box_metrics()"
     @init_box_params()
     for hx in @hexes
       aa = hx[0]
@@ -479,8 +515,16 @@ class HexBox
       @test_left_right_top_bottom(aa,b2)
     @get_corner_fit()
     @get_anchor_hex()
+    console.log "      anchor_hex is [#{@anchor_hex[0]},#{@anchor_hex[1]}]"
     @get_box_xy()
     @get_height_width()
+    console.log "         @get_height_width()"
+    console.log "             right = #{@right}"
+    console.log "              left = #{@left}"
+    console.log "            bottom = #{@bottom}"
+    console.log "               top = #{@top}"
+    console.log "             width = #{@width}"
+    console.log "            height = #{@height}"
     @get_box_corner_to_anchor_hex_center()
 
 
