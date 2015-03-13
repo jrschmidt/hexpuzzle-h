@@ -324,7 +324,15 @@ class PieceRedrawBuffer
   prepare_next_redraw: (x,y) ->
     ctx = @redraw_image.getContext('2d')
     ctx.clearRect(0,0,@width,@height)
-    ctx.drawImage(@view.canvas,x,y,@width,@height,0,0,@width,@height)
+    ht = @height
+    if y < 0
+      ht = ht + y
+      y = 0
+    wd = @width
+    if x < 0
+      wd = wd + x
+      x = 0
+    ctx.drawImage(@view.canvas,x,y,wd,ht,0,0,wd,ht)
     @redraw_x = x
     @redraw_y =y
 
