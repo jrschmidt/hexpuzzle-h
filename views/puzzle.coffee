@@ -105,20 +105,13 @@ class PuzzleStatus
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @all_pieces = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"]
-    @unset_pieces = [] # FIXME Change to all_pieces.clone()
-    @unset_pieces[p] = @all_pieces[p] for p in [0..15]
-    # @unset_pieces = [] # FIXME Change to all_pieces.clone()
-    # @unset_pieces[p] = @puzzle.pz_status.all_pieces[p] for p in [0..15]
-    # @pieces_in_puzzle = 16
 
 
   start_new_puzzle: () ->
     @finished = false
-    @unset_pieces = [] # FIXME Change to all_pieces.clone()
-    @unset_pieces[p] = @all_pieces[p] for p in [0..15]
+    @unset_pieces = @all_pieces.slice(0, 15)
     @pieces_in_puzzle = 16
     @pieces_set = 0
-    console.log "CALL reset_mask() from start_new_puzzle"
     @puzzle.mask.reset_mask(@puzzle.grid)
     @puzzle.ui_status.reset()
     @puzzle.puzzle_view.reset()
@@ -141,7 +134,6 @@ class PuzzleStatus
 
 
   next_piece: () ->
-    console.log "CALL reset_mask() from next_piece"
     @puzzle.mask.reset_mask(@puzzle.grid)
     @puzzle.indicator.decrement()
     pc = Math.floor(@pieces_in_puzzle*Math.random())
@@ -153,7 +145,6 @@ class PuzzleStatus
   start_first_piece: () ->
     @puzzle.colors.new_rotation()
     @puzzle.indicator.start_indicator()
-    # @puzzle.mask.init_missing_pieces_mask()
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
     @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
@@ -164,21 +155,16 @@ class PuzzleStatus
 class MissingPiecesMask
 
   constructor: (puzzle_app) ->
-  # constructor: (puzzle_app, grid) ->
     @puzzle = puzzle_app
     @puzzle_pattern = @puzzle.puzzle_pattern
-    # @grid = grid
     @hex_draw = @puzzle.hex_draw
-    # @reset_mask()
+
 
   reset_mask: (grid) ->
-    console.log " BEGIN  MissingPiecesMask#reset_mask()"
-    console.log "    grid size = #{grid.length}"
     @puzzle.puzzle_view.draw_photo()
     @grid = grid
     @get_next_color()
     @draw_mask(grid)
-    console.log " END    MissingPiecesMask#reset_mask()"
 
 
   get_next_color: () ->
@@ -186,8 +172,6 @@ class MissingPiecesMask
 
 
   draw_mask: (grid) ->
-    console.log "     draw_mask() called from reset_mask()"
-    console.log "        grid size = #{grid.length}"
     @hex_draw.set_context("canvas")
     for bb in [1..10]
       for aa in [1..24]
@@ -198,18 +182,15 @@ class MissingPiecesMask
 class PuzzlePiece
 
   constructor: (puzzle_app) ->
-    console.log "PuzzlePiece constructor"
     @puzzle = puzzle_app
     @hex_box = @puzzle.hex_box
     @pattern  = new PiecePattern(this)
-    console.log "    @pattern.img.id = #{@pattern.img.id}"
     @redraw = new PieceRedrawBuffer(this)
     @hexes = []
     @bounding_box = [0,0,0,0,]
 
 
   construct_piece: (sym) ->
-    console.log "PuzzlePiece construct_piece() sym = #{sym}"
     @sym = sym
     @hexes = @get_hexes()
     @hex_box.set_hex_box(sym)
@@ -237,17 +218,11 @@ class PuzzlePiece
     @photo_clip.width = @hex_box.width
     @photo_clip.height = @hex_box.height
     @photo_clip_context = @photo_clip.getContext('2d')
-
     xx = @hex_box.box_xy[0] - @puzzle.puzzle_view.puzzle_xy[0]
     yy = @hex_box.box_xy[1] - @puzzle.puzzle_view.puzzle_xy[1]
-
     photo = @puzzle.puzzle_view.photo
     @photo_clip_context.drawImage(photo,xx,yy,@hex_box.width,@hex_box.height,0,0,@hex_box.width,@hex_box.height)
-
-    console.log "CALL reset_mask() from cut_piece_from_photo"
     @puzzle.mask.reset_mask(@puzzle.grid)
-    # @mask = new MissingPiecesMask(@puzzle, @puzzle.grid)
-    # pm_img = document.getElementById("piece-mask")
     context = @pattern.img.getContext('2d')
     context.globalCompositeOperation = 'source-atop'
     context.drawImage(@photo_clip,0,0)
@@ -284,15 +259,6 @@ class PuzzlePiece
 
   in_bounding_box: (x,y) ->
     if x>@left && x<@right && y>@top && y<@bottom then return true else return false
-
-
-  # TODO Does this method belong in PiecePattern class?
-  # get_hexes: () ->
-  #   hexes = []
-  #   for bb in [1..10]
-  #     for aa in [1..24]
-  #       hexes.push([aa,bb]) if @puzzle.puzzle_pattern.grid[bb][aa] == @sym
-  #   return hexes
 
 
 
@@ -443,13 +409,11 @@ class HexDraw
 
 
   set_context: (mode) ->
-    console.log "CALL set_context()  mode = #{mode}"
     @mode = mode
     @context = @puzzle_view.get_drawing_context(mode)
 
 
   set_context2: (img) ->
-    console.log "CALL set_context2()  img.id = #{img.id}"
     @context = img.getContext('2d')
 
 
@@ -491,7 +455,6 @@ class HexBox
 
 
   set_hex_box: (piece_symbol) ->
-    console.log "HexBox set_hex_box() piece_symbol = #{piece_symbol}"
     @reset_hexes(@get_hexes(piece_symbol))
     @get_box_metrics()
 
@@ -616,7 +579,6 @@ class Indicator
 
   decrement: () ->
     @write_message(@puzzle.pz_status.pieces_in_puzzle)
-    # console.log(@puzzle.pz_status.pieces_in_puzzle+" Pieces Left")
 
 
   write_message: (n) ->
@@ -663,7 +625,6 @@ class ColorRotation
     rr.push(@app_colors[i]) for i in [@start_number..15]
     rr.push(@app_colors[i]) for i in [0..@start_number-1] if @start_number > 0
     rr = rr.reverse() if @color_direction == "down"
-    # console.log(color) for color in rr
     return rr
 
 
