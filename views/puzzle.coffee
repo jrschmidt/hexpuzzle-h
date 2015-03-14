@@ -119,13 +119,9 @@ class PuzzleStatus
 
 
   set_piece: () ->
-    console.log " "
-    console.log "set_piece()"
     @puzzle.ui_status.terminate_piece_drag()
     @pieces_set += 1
     @pieces_in_puzzle -= 1
-    console.log "   pieces_set = #{@pieces_set}"
-    console.log "   pieces_in_puzzle = #{@pieces_in_puzzle}"
     if @pieces_set == 16
       @puzzle_finished()
     else
@@ -144,14 +140,6 @@ class PuzzleStatus
     @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
-    console.log " "
-    console.log "next_piece()"
-    console.log "   sym = #{@sym}"
-    console.log "   pc = #{pc}"
-    up = ""
-    @unset_pieces.forEach (pcc) ->
-      up = up + pcc
-    console.log "   @unset_pieces = #{up}"
     @puzzle.piece.construct_piece(@sym)
 
 
@@ -175,7 +163,6 @@ class MissingPiecesMask
   reset_mask: () ->
     @puzzle.puzzle_view.draw_photo()
     @get_next_color()
-    console.log "CALL draw_mask() from reset_mask()"
     @draw_mask()
 
 
@@ -184,18 +171,12 @@ class MissingPiecesMask
 
 
   draw_mask: () ->
-    console.log " "
-    console.log "draw_mask()"
-    console.log "   & & & & @color = #{@color} & & & &"
     grid = @puzzle.grid
     @hex_draw.set_context("canvas")
-    zzz = 0 # EXTRA
     for bb in [1..10]
       for aa in [1..24]
         if grid[bb][aa] in @puzzle.pz_status.unset_pieces
           @hex_draw.fill_hex_ab(aa,bb,@color)
-          zzz = zzz + 1 # EXTRA
-    console.log "   #{zzz} hexes added to mask"
 
 
 
@@ -241,10 +222,6 @@ class PuzzlePiece
     xx = @hex_box.box_xy[0] - @puzzle.puzzle_view.puzzle_xy[0]
     yy = @hex_box.box_xy[1] - @puzzle.puzzle_view.puzzle_xy[1]
     photo = @puzzle.puzzle_view.photo
-    console.log "xx is negative" if xx < 0
-    console.log "yy is negative" if yy < 0
-    console.log "@hex_box.width is negative" if @hex_box.width < 0
-    console.log "@hex_box.height is negative" if @hex_box.height < 0
     @photo_clip_context.drawImage(photo,xx,yy,@hex_box.width,@hex_box.height,0,0,@hex_box.width,@hex_box.height)
     @puzzle.mask.reset_mask()
     context = @pattern.img.getContext('2d')
@@ -368,7 +345,6 @@ class PuzzleView
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @puzzle_xy = [100,30]
-    console.log "CALL PuzzleView.reset() from PuzzleView.constructor"
     @reset()
 
 
@@ -381,8 +357,6 @@ class PuzzleView
 
 
   draw_photo: () ->
-    console.log "   * * * draw_photo()"
-    # @context = @get_drawing_context("canvas")
     canvas = document.getElementById("puzzle-widget")
     context = canvas.getContext('2d')
     context.drawImage(@photo,@puzzle_xy[0],@puzzle_xy[1])
@@ -470,7 +444,6 @@ class HexDraw
 
 
   ctx_fill_hex_ab: (ctx,a,b,color) ->
-    #  ### <9> ###  #
     cnv = document.getElementById("puzzle-widget")
     @context = cnv.getContext('2d')
     xy = @get_hex_xy(a,b)
@@ -502,12 +475,7 @@ class HexBox
 
 
   set_hex_box: (piece_symbol) ->
-    console.log " "
-    console.log "set_hex_box()"
-    console.log "   symbol = #{piece_symbol}"
     @reset_hexes(@get_hexes(piece_symbol))
-    console.log "   after reset_hexes():"
-    console.log "      hexes.length = #{@hexes.length}"
     @get_box_metrics()
 
 
@@ -516,7 +484,6 @@ class HexBox
 
 
   get_box_metrics: () ->
-    console.log "   get_box_metrics()"
     @init_box_params()
     for hx in @hexes
       aa = hx[0]
@@ -524,16 +491,8 @@ class HexBox
       @test_left_right_top_bottom(aa,b2)
     @get_corner_fit()
     @get_anchor_hex()
-    console.log "      anchor_hex is [#{@anchor_hex[0]},#{@anchor_hex[1]}]"
     @get_box_xy()
     @get_height_width()
-    console.log "         @get_height_width()"
-    console.log "             right = #{@right}"
-    console.log "              left = #{@left}"
-    console.log "            bottom = #{@bottom}"
-    console.log "               top = #{@top}"
-    console.log "             width = #{@width}"
-    console.log "            height = #{@height}"
     @get_box_corner_to_anchor_hex_center()
 
 
@@ -718,12 +677,10 @@ class ColorRotation
 get_photo = (app) ->
   photo = new Image()
   photo.onload = =>
-    console.log ">>>>>>>>>>>>> @photo.onload EVENT <<<<<<<<<<<<<"
     app.puzzle_view.photo = photo
     app.puzzle_view.draw_photo()
     if app.load_status == "pattern"
       app.load_status = "ready"
-      console.log "start_new_puzzle() called from get_photo()"
       app.pz_status.start_new_puzzle()
     else
       app.load_status = "photo"
@@ -736,14 +693,12 @@ get_puzzle_pattern = (app) ->
   xhr.open('GET',url)
   xhr.onreadystatechange = ->
     if (xhr.readyState == 4 && xhr.status == 200)
-      console.log ">>>>>>>>>>>>> pattern XHR ready EVENT <<<<<<<<<<<<<"
       msg_in = xhr.responseText
       response = JSON.parse(msg_in)
       @pstring = response.pstring
       app.grid = get_pattern_grid(@pstring)
       if app.load_status == "photo"
         app.load_status = "ready"
-        console.log "start_new_puzzle() called from get_puzzle_pattern()"
         app.pz_status.start_new_puzzle()
       else
         app.load_status = "pattern"
