@@ -117,10 +117,18 @@ class PuzzleStatus
     console.log "   @unset_pieces = #{up}"
     @pieces_in_puzzle = 16
     @pieces_set = 0
-    @puzzle.mask.reset_mask(@puzzle.grid)
+    #  ### N E W  <3> ###  #
+    # @puzzle.mask.draw_mask(@puzzle.grid)
+    # @puzzle.mask.reset_mask(@puzzle.grid)
+    console.log "   ** snp 1 **"
     @puzzle.ui_status.reset()
     @puzzle.puzzle_view.reset()
+    console.log "   ** snp 2 **"
+    #  ### N E W  <4> ###  #
+    @puzzle.mask.draw_mask(@puzzle.grid)
+    console.log "   ** snp 3 **"
     @start_first_piece()
+    console.log "   ** snp 4 **"
 
 
   set_piece: () ->
@@ -166,6 +174,11 @@ class PuzzleStatus
   start_first_piece: () ->
     @puzzle.colors.new_rotation()
     @puzzle.indicator.start_indicator()
+    #  ### N E W  <1> (didn't work) ###  #
+    @puzzle.mask.reset_mask(@puzzle.grid)
+    #  ### N E W  <2> ) ###  #
+    #  ### N E W  <3> (move this to start_new_puzzle() ) ###  #
+    # @puzzle.mask.draw_mask(@puzzle.grid)
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
     # @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
@@ -201,10 +214,23 @@ class MissingPiecesMask
 
 
   draw_mask: (grid) ->
-    @hex_draw.set_context("canvas")
+    console.log " "
+    console.log "draw_mask()"
+    console.log "   & & & & @color = #{@color} & & & &"
+    #  ### N E W  <6> ###  #
+    # @hex_draw.set_context("canvas")
+    # cnv = document.getElementById("puzzle-widget")
+    # ctx = cnv.getContext('2d')
+    zzz = 0 # EXTRA
     for bb in [1..10]
       for aa in [1..24]
-        @hex_draw.fill_hex_ab(aa,bb,@color) if grid[bb][aa] in @puzzle.pz_status.unset_pieces
+        # @hex_draw.fill_hex_ab(aa,bb,@color) if grid[bb][aa] in @puzzle.pz_status.unset_pieces
+        if grid[bb][aa] in @puzzle.pz_status.unset_pieces
+          #  ### N E W  <7> ###  #
+          @hex_draw.ctx_fill_hex_ab(aa,bb,@color)
+          # @hex_draw.fill_hex_ab(aa,bb,@color)
+          zzz = zzz + 1
+    console.log "   #{zzz} hexes added to mask"
 
 
 
@@ -379,6 +405,7 @@ class PuzzleView
     @reset()
     @photo = new Image()
     @photo.onload = =>
+      console.log ">>>>>>>>>>>>> @photo.onload EVENT <<<<<<<<<<<<<"
       @draw_photo()
     @photo.src = '/pz-photo'
 
@@ -391,6 +418,7 @@ class PuzzleView
 
 
   draw_photo: () ->
+    console.log "   * * * draw_photo()"
     @context = @get_drawing_context("canvas")
     @context.drawImage(@photo,@puzzle_xy[0],@puzzle_xy[1])
 
@@ -467,6 +495,14 @@ class HexDraw
 
 
   fill_hex_ab: (a,b,color) ->
+    xy = @get_hex_xy(a,b)
+    @fill_hex_xy(xy[0],xy[1],color)
+
+
+  ctx_fill_hex_ab: (ctx,a,b,color) ->
+    #  ### <9> ###  #
+    cnv = document.getElementById("puzzle-widget")
+    @context = cnv.getContext('2d')
     xy = @get_hex_xy(a,b)
     @fill_hex_xy(xy[0],xy[1],color)
 
