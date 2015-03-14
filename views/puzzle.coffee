@@ -146,9 +146,12 @@ class PuzzleStatus
   next_piece: () ->
     @puzzle.mask.reset_mask(@puzzle.grid)
     @puzzle.indicator.decrement()
+    @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
-    @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
+    # pc = Math.floor(@pieces_in_puzzle*Math.random())
+    # @sym = @unset_pieces[pc]
+    # @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
     console.log " "
     console.log "next_piece()"
     console.log "   sym = #{@sym}"
@@ -165,7 +168,7 @@ class PuzzleStatus
     @puzzle.indicator.start_indicator()
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
-    @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
+    # @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
     up = ""
     @unset_pieces.forEach (pcc) ->
       up = up + pcc
