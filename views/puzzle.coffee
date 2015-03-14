@@ -13,6 +13,8 @@ class PuzzleApp
     @indicator = new Indicator(this)
     @grid_model = new PuzzleGridModel(this)
     @mask = new MissingPiecesMask(this)
+    @load_status = "none"
+    get_photo(this)
     get_puzzle_pattern(this)
 
 
@@ -403,11 +405,11 @@ class PuzzleView
     @puzzle = puzzle_app
     @puzzle_xy = [100,30]
     @reset()
-    @photo = new Image()
-    @photo.onload = =>
-      console.log ">>>>>>>>>>>>> @photo.onload EVENT <<<<<<<<<<<<<"
-      @draw_photo()
-    @photo.src = '/pz-photo'
+    # @photo = new Image()
+    # @photo.onload = =>
+    #   console.log ">>>>>>>>>>>>> @photo.onload EVENT <<<<<<<<<<<<<"
+    #   @draw_photo()
+    # @photo.src = '/pz-photo'
 
 
   reset: () ->
@@ -745,9 +747,23 @@ class ColorRotation
   @app.events.handle_mousemove(e)
 
 
+get_photo = (app) ->
+  photo = new Image()
+  photo.onload = =>
+    console.log ">>>>>>>>>>>>> @photo.onload EVENT <<<<<<<<<<<<<"
+    app.puzzle_view.photo = photo
+    app.puzzle_view.draw_photo()
+    if app.load_status == "pattern"
+      app.load_status = "ready"
+      app.pz_status.start_new_puzzle()
+    else
+      app.load_status = "photo"
+  photo.src = '/pz-photo'
+
+
 get_puzzle_pattern = (app) ->
   xhr = new XMLHttpRequest()
-  url = "/puzzle-pattern"
+  url = '/puzzle-pattern'
   xhr.open('GET',url)
   xhr.onreadystatechange = ->
     if (xhr.readyState == 4 && xhr.status == 200)
@@ -755,7 +771,11 @@ get_puzzle_pattern = (app) ->
       response = JSON.parse(msg_in)
       @pstring = response.pstring
       app.grid = get_pattern_grid(@pstring)
-      app.pz_status.start_new_puzzle()
+      if app.load_status == "photo"
+        app.load_status = "ready"
+        app.pz_status.start_new_puzzle()
+      else
+        app.load_status = "pattern"
   xhr.send()
 
 
