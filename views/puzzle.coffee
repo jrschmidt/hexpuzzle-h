@@ -262,7 +262,8 @@ class PuzzlePiece
   draw_piece: (x,y) ->
     @redraw.apply_redraw()
     @redraw.prepare_next_redraw(x,y)
-    context = @puzzle.puzzle_view.context_canvas
+    canvas = document.getElementById("puzzle-widget")
+    context = canvas.getContext('2d')
     context.drawImage(@pattern.img,x,y)
     @reset_bounding_box(x,y)
 
@@ -325,7 +326,7 @@ class PieceRedrawBuffer
     @piece = piece
     @puzzle = @piece.puzzle
     @view = @puzzle.puzzle_view
-
+    @canvas = document.getElementById("puzzle-widget")
     @redraw_image = document.createElement('canvas')
     @redraw_image.width = 30
     @redraw_image.height = 30
@@ -356,7 +357,7 @@ class PieceRedrawBuffer
     if x < 0
       wd = wd + x
       x = 0
-    ctx.drawImage(@view.canvas,x,y,wd,ht,0,0,wd,ht)
+    ctx.drawImage(@canvas,x,y,wd,ht,0,0,wd,ht)
     @redraw_x = x
     @redraw_y =y
 
