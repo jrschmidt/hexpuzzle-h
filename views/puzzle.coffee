@@ -111,26 +111,11 @@ class PuzzleStatus
 
   start_new_puzzle: () ->
     @finished = false
-    @unset_pieces = @all_pieces.slice(0, 16)
-    console.log "start_new_puzzle()"
-    up = ""
-    @unset_pieces.forEach (pcc) ->
-      up = up + pcc
-    console.log "   @unset_pieces = #{up}"
+    @unset_pieces = @all_pieces[0..15]
     @pieces_in_puzzle = 16
     @pieces_set = 0
-    #  ### N E W  <3> ###  #
-    # @puzzle.mask.draw_mask(@puzzle.grid)
-    # @puzzle.mask.reset_mask(@puzzle.grid)
-    console.log "   ** snp 1 **"
     @puzzle.ui_status.reset()
-    @puzzle.puzzle_view.reset()
-    console.log "   ** snp 2 **"
-    #  ### N E W  <4> ###  #
-    @puzzle.mask.draw_mask(@puzzle.grid)
-    console.log "   ** snp 3 **"
     @start_first_piece()
-    console.log "   ** snp 4 **"
 
 
   set_piece: () ->
@@ -154,14 +139,11 @@ class PuzzleStatus
 
 
   next_piece: () ->
-    @puzzle.mask.reset_mask(@puzzle.grid)
+    @puzzle.mask.reset_mask()
     @puzzle.indicator.decrement()
     @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
-    # pc = Math.floor(@pieces_in_puzzle*Math.random())
-    # @sym = @unset_pieces[pc]
-    # @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
     console.log " "
     console.log "next_piece()"
     console.log "   sym = #{@sym}"
@@ -176,22 +158,8 @@ class PuzzleStatus
   start_first_piece: () ->
     @puzzle.colors.new_rotation()
     @puzzle.indicator.start_indicator()
-    #  ### N E W  <1> (didn't work) ###  #
-    @puzzle.mask.reset_mask(@puzzle.grid)
-    #  ### N E W  <2> ) ###  #
-    #  ### N E W  <3> (move this to start_new_puzzle() ) ###  #
-    # @puzzle.mask.draw_mask(@puzzle.grid)
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
-    # @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
-    up = ""
-    @unset_pieces.forEach (pcc) ->
-      up = up + pcc
-    console.log " "
-    console.log "start_first_piece()"
-    console.log "   @unset_pieces = #{up}"
-    console.log "   sym = #{@sym}"
-    console.log "   pc = #{pc}"
     @puzzle.piece.construct_piece(@sym)
 
 
@@ -204,34 +172,29 @@ class MissingPiecesMask
     @hex_draw = @puzzle.hex_draw
 
 
-  reset_mask: (grid) ->
+  reset_mask: () ->
     @puzzle.puzzle_view.draw_photo()
-    @grid = grid
     @get_next_color()
-    @draw_mask(grid)
+    console.log "CALL draw_mask() from reset_mask()"
+    @draw_mask()
 
 
   get_next_color: () ->
     @color = @puzzle.colors.next_color()
 
 
-  draw_mask: (grid) ->
+  draw_mask: () ->
     console.log " "
     console.log "draw_mask()"
     console.log "   & & & & @color = #{@color} & & & &"
-    #  ### N E W  <6> ###  #
-    # @hex_draw.set_context("canvas")
-    # cnv = document.getElementById("puzzle-widget")
-    # ctx = cnv.getContext('2d')
+    grid = @puzzle.grid
+    @hex_draw.set_context("canvas")
     zzz = 0 # EXTRA
     for bb in [1..10]
       for aa in [1..24]
-        # @hex_draw.fill_hex_ab(aa,bb,@color) if grid[bb][aa] in @puzzle.pz_status.unset_pieces
         if grid[bb][aa] in @puzzle.pz_status.unset_pieces
-          #  ### N E W  <7> ###  #
-          @hex_draw.ctx_fill_hex_ab(aa,bb,@color)
-          # @hex_draw.fill_hex_ab(aa,bb,@color)
-          zzz = zzz + 1
+          @hex_draw.fill_hex_ab(aa,bb,@color)
+          zzz = zzz + 1 # EXTRA
     console.log "   #{zzz} hexes added to mask"
 
 
@@ -283,7 +246,7 @@ class PuzzlePiece
     console.log "@hex_box.width is negative" if @hex_box.width < 0
     console.log "@hex_box.height is negative" if @hex_box.height < 0
     @photo_clip_context.drawImage(photo,xx,yy,@hex_box.width,@hex_box.height,0,0,@hex_box.width,@hex_box.height)
-    @puzzle.mask.reset_mask(@puzzle.grid)
+    @puzzle.mask.reset_mask()
     context = @pattern.img.getContext('2d')
     context.globalCompositeOperation = 'source-atop'
     context.drawImage(@photo_clip,0,0)
@@ -404,25 +367,24 @@ class PuzzleView
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
     @puzzle_xy = [100,30]
+    console.log "CALL PuzzleView.reset() from PuzzleView.constructor"
     @reset()
-    # @photo = new Image()
-    # @photo.onload = =>
-    #   console.log ">>>>>>>>>>>>> @photo.onload EVENT <<<<<<<<<<<<<"
-    #   @draw_photo()
-    # @photo.src = '/pz-photo'
 
 
   reset: () ->
-    @canvas = document.getElementById("puzzle-widget")
-    @context_canvas = @canvas.getContext('2d')
-    @context_canvas.fillStyle = "#999999"
-    @context_canvas.fillRect(0,0,520,280)
+    "PuzzleView.reset"
+    canvas = document.getElementById("puzzle-widget")
+    @context = canvas.getContext('2d')
+    @context.fillStyle = "#999999"
+    @context.fillRect(0,0,520,280)
 
 
   draw_photo: () ->
     console.log "   * * * draw_photo()"
-    @context = @get_drawing_context("canvas")
-    @context.drawImage(@photo,@puzzle_xy[0],@puzzle_xy[1])
+    # @context = @get_drawing_context("canvas")
+    canvas = document.getElementById("puzzle-widget")
+    context = canvas.getContext('2d')
+    context.drawImage(@photo,@puzzle_xy[0],@puzzle_xy[1])
 
 
   get_drawing_context: (mode) ->
@@ -480,8 +442,13 @@ class HexDraw
 
 
   set_context: (mode) ->
-    @mode = mode
-    @context = @puzzle_view.get_drawing_context(mode)
+    switch mode
+      when "canvas"
+        canvas = document.getElementById("puzzle-widget")
+        @context = canvas.getContext('2d')
+      when "piece-mask"
+        pm_img = document.getElementById("piece-mask")
+        @context = pm_img.getContext('2d')
 
 
   set_context2: (img) ->
@@ -755,6 +722,7 @@ get_photo = (app) ->
     app.puzzle_view.draw_photo()
     if app.load_status == "pattern"
       app.load_status = "ready"
+      console.log "start_new_puzzle() called from get_photo()"
       app.pz_status.start_new_puzzle()
     else
       app.load_status = "photo"
@@ -767,12 +735,14 @@ get_puzzle_pattern = (app) ->
   xhr.open('GET',url)
   xhr.onreadystatechange = ->
     if (xhr.readyState == 4 && xhr.status == 200)
+      console.log ">>>>>>>>>>>>> pattern XHR ready EVENT <<<<<<<<<<<<<"
       msg_in = xhr.responseText
       response = JSON.parse(msg_in)
       @pstring = response.pstring
       app.grid = get_pattern_grid(@pstring)
       if app.load_status == "photo"
         app.load_status = "ready"
+        console.log "start_new_puzzle() called from get_puzzle_pattern()"
         app.pz_status.start_new_puzzle()
       else
         app.load_status = "pattern"
