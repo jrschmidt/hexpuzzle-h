@@ -135,7 +135,7 @@ class PuzzleStatus
 
 
   next_piece: () ->
-    @puzzle.mask.reset_mask()
+    @puzzle.mask.redraw_mask()
     @puzzle.indicator.decrement()
     @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
     pc = Math.floor(@pieces_in_puzzle*Math.random())
@@ -163,6 +163,11 @@ class MissingPiecesMask
   reset_mask: () ->
     @puzzle.puzzle_view.draw_photo()
     @get_next_color()
+    @draw_mask()
+
+
+  redraw_mask: () ->
+    @puzzle.puzzle_view.draw_photo()
     @draw_mask()
 
 
@@ -632,7 +637,7 @@ class ColorRotation
 
 
   new_rotation: () ->
-    if Math.floor(2*Math.random()) > 1
+    if Math.random() > 0.5
       @color_direction = "up"
     else
       @color_direction = "down"
