@@ -115,6 +115,7 @@ class PuzzleStatus
     @pieces_in_puzzle = 16
     @pieces_set = 0
     @puzzle.ui_status.reset()
+    @puzzle.indicator.clear_indicator()
     @start_first_piece()
 
 
@@ -131,6 +132,7 @@ class PuzzleStatus
   puzzle_finished: () ->
     @puzzle.puzzle_view.draw_photo()
     @finished = true
+    @prompt_for_new_puzzle()
 
 
 
@@ -149,6 +151,10 @@ class PuzzleStatus
     pc = Math.floor(@pieces_in_puzzle*Math.random())
     @sym = @unset_pieces[pc]
     @puzzle.piece.construct_piece(@sym)
+
+
+  prompt_for_new_puzzle: () ->
+    @puzzle.indicator.new_puzzle_prompt()
 
 
 
@@ -583,23 +589,41 @@ class Indicator
 
 
   start_indicator: () ->
-    @canvas = document.getElementById("puzzle-widget")
-    @context = @canvas.getContext('2d')
-    @context.fillStyle = 'black'
+    @clear_indicator
+    canvas = document.getElementById("puzzle-widget")
+    context = canvas.getContext('2d')
     for p in [16..1]
-      @context.fillStyle = @puzzle.colors.rotation[16-p]
+      context.fillStyle = @puzzle.colors.rotation[16-p]
       xp = 489-17*p
       yp = 6
-      @context.beginPath()
-      @context.moveTo(xp+5,yp)
-      @context.lineTo(xp+12,yp)
-      @context.lineTo(xp+12,yp+17)
-      @context.lineTo(xp+5,yp+17)
-      @context.lineTo(xp,yp+8)
-      @context.lineTo(xp+5,yp)
-      @context.fill()
-      @context.closePath()
+      context.beginPath()
+      context.moveTo(xp+5,yp)
+      context.lineTo(xp+12,yp)
+      context.lineTo(xp+12,yp+17)
+      context.lineTo(xp+5,yp+17)
+      context.lineTo(xp,yp+8)
+      context.lineTo(xp+5,yp)
+      context.fill()
+      context.closePath()
     @write_message(16)
+
+
+  clear_indicator: ->
+    canvas = document.getElementById("puzzle-widget")
+    context = canvas.getContext('2d')
+    context.fillStyle = '#999999'
+    context.fillRect(100,0,385,30)
+
+
+  new_puzzle_prompt: ->
+    @clear_indicator()
+    canvas = document.getElementById("puzzle-widget")
+    context = canvas.getContext('2d')
+    context.fillStyle = "#cc3333"
+    context.font = "bold 14px sans-serif"
+    context.textAlign = "left"
+    context.textbaseline = "top"
+    context.fillText("Click for new puzzle",240,20)
 
 
   decrement: () ->
@@ -607,14 +631,14 @@ class Indicator
 
 
   write_message: (n) ->
-    @canvas = document.getElementById("puzzle-widget")
-    @context = @canvas.getContext('2d')
-    @context.fillStyle = "#999999"
-    @context.fillRect(100,0,115+17*(16-n),30)
-    @context.fillStyle = "#333333"
-    @context.font = "bold 14px sans-serif"
-    @context.textAlign = "left"
-    @context.textbaseline = "top"
+    canvas = document.getElementById("puzzle-widget")
+    context = canvas.getContext('2d')
+    context.fillStyle = "#999999"
+    context.fillRect(100,0,115+17*(16-n),30)
+    context.fillStyle = "#333333"
+    context.font = "bold 14px sans-serif"
+    context.textAlign = "left"
+    context.textbaseline = "top"
     if n == 1
       msg = "1 piece left"
       cx = 374
@@ -622,7 +646,7 @@ class Indicator
       msg = n.toString() + " pieces left"
       cx = 100+17*(16-n)
       cx = cx + 10 if n < 10
-    @context.fillText(msg,cx,20)
+    context.fillText(msg,cx,20)
 
 
 
