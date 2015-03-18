@@ -46,13 +46,14 @@ class PuzzleData
 
   def initialize
     @pattern = PuzzlePattern.new
-    @purl = PhotoUrl.new
+    @photo = PhotoUrl.new
   end
 
 
   def get_puzzle_info
     pt = @pattern.to_puzzle_string
-    pz_obj = {pstring: pt}
+    ph = @photo.get_url
+    pz_obj = {photo: ph, pstring: pt}
     return pz_obj
   end
 
