@@ -15,7 +15,7 @@ class PuzzleApp
     @mask = new MissingPiecesMask(this)
     @load_status = "none"
     get_photo(this)
-    get_puzzle_pattern(this)
+    get_puzzle_info(this)
 
 
 
@@ -162,7 +162,6 @@ class MissingPiecesMask
 
   constructor: (puzzle_app) ->
     @puzzle = puzzle_app
-    @puzzle_pattern = @puzzle.puzzle_pattern
     @hex_draw = @puzzle.hex_draw
 
 
@@ -716,9 +715,9 @@ get_photo = (app) ->
   photo.src = '/pz-photo'
 
 
-get_puzzle_pattern = (app) ->
+get_puzzle_info = (app) ->
   xhr = new XMLHttpRequest()
-  url = '/puzzle-pattern'
+  url = '/puzzle-data'
   xhr.open('GET',url)
   xhr.onreadystatechange = ->
     if (xhr.readyState == 4 && xhr.status == 200)

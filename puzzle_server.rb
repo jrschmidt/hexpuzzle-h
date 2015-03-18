@@ -14,11 +14,6 @@ set :server, %w[webrick thin mongrel]
 set :port, 4566
 
 
-before '/puzzle-pattern' do
-  @pj = PuzzleJson.new if not defined? @pj
-end
-
-
 get '/' do
   erb :index
 end
@@ -29,17 +24,15 @@ get '/javascripts/puzzle.js' do
 end
 
 
-get '/puzzle-pattern' do
-  @pj.get_puzzle_info
+before '/puzzle-data' do
+  @pj = PuzzleData.new if not defined? @pj
 end
 
 
-# get '/puzzle-pattern' do
-#   @puzzle = PuzzlePattern.new
-#   pz = @puzzle.to_puzzle_string
-#   pz_obj = {pstring: pz}
-#   return pz_obj.to_json
-# end
+get '/puzzle-data' do
+  pz_obj = @pj.get_puzzle_info
+  return pz_obj.to_json
+end
 
 
 get '/pz-photo' do
@@ -49,7 +42,7 @@ end
 
 
 
-class PuzzleJson
+class PuzzleData
 
   def initialize
     @pattern = PuzzlePattern.new
@@ -57,12 +50,14 @@ class PuzzleJson
   end
 
 
-def get_puzzle_info
-  return "TEST get_puzzle_info"
+  def get_puzzle_info
+    pt = @pattern.to_puzzle_string
+    pz_obj = {pstring: pt}
+    return pz_obj
+  end
+
 end
 
-
-end
 
 
 class PhotoUrl
