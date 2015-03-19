@@ -13,8 +13,7 @@ class PuzzleApp
     @indicator = new Indicator(this)
     @grid_model = new PuzzleGridModel(this)
     @mask = new MissingPiecesMask(this)
-    @load_status = "none"
-    get_photo(this)
+    # get_photo(this)
     get_puzzle_info(this)
 
 
@@ -702,19 +701,6 @@ class ColorRotation
   @app.events.handle_mousemove(e)
 
 
-get_photo = (app) ->
-  photo = new Image()
-  photo.onload = =>
-    app.puzzle_view.photo = photo
-    app.puzzle_view.draw_photo()
-    if app.load_status == "pattern"
-      app.load_status = "ready"
-      app.pz_status.start_new_puzzle()
-    else
-      app.load_status = "photo"
-  photo.src = '/pz-photo'
-
-
 get_puzzle_info = (app) ->
   xhr = new XMLHttpRequest()
   url = '/puzzle-data'
@@ -723,13 +709,14 @@ get_puzzle_info = (app) ->
     if (xhr.readyState == 4 && xhr.status == 200)
       msg_in = xhr.responseText
       response = JSON.parse(msg_in)
-      @pstring = response.pstring
-      app.grid = get_pattern_grid(@pstring)
-      if app.load_status == "photo"
-        app.load_status = "ready"
+      pstring = response.pstring
+      app.grid = get_pattern_grid(pstring)
+      photo = new Image()
+      photo.onload = =>
+        app.puzzle_view.photo = photo
+        app.puzzle_view.draw_photo()
         app.pz_status.start_new_puzzle()
-      else
-        app.load_status = "pattern"
+      photo.src= response.photo
   xhr.send()
 
 

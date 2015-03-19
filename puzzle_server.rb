@@ -35,8 +35,8 @@ get '/puzzle-data' do
 end
 
 
-get '/pz-photo' do
-  @photo_name = "hx476.png"
+get '*.png' do
+  @photo_name = 'photos' + params[:splat][0] + '.png'
   send_file @photo_name, :filename => @photo_name, :type => :png
 end
 
