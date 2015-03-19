@@ -181,7 +181,7 @@ class PuzzlePattern
 
 
   def shuffle_piece_sizes
-    sizes = SIZES_START
+    sizes = SIZES_START.clone
     fifteens = 0
     until fifteens == 4 do
       r6 = rand(6)

@@ -13,7 +13,6 @@ class PuzzleApp
     @indicator = new Indicator(this)
     @grid_model = new PuzzleGridModel(this)
     @mask = new MissingPiecesMask(this)
-    # get_photo(this)
     get_puzzle_info(this)
 
 
@@ -36,7 +35,7 @@ class EventHandler
     y = py-dy
 
     if @pz_status.finished == true
-      @pz_status.start_new_puzzle()
+      get_puzzle_info(@puzzle)
     else
       if @puzzle.piece.in_bounding_box(x,y)
         @ui_status.activate_piece_drag()
