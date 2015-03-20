@@ -112,6 +112,8 @@ class PuzzleStatus
     @unset_pieces = @all_pieces[0..15]
     @pieces_in_puzzle = 16
     @pieces_set = 0
+    @h_ok = "no"
+    @i_ok = "no"
     @puzzle.ui_status.reset()
     @puzzle.indicator.clear_indicator()
     @start_first_piece()
@@ -138,16 +140,23 @@ class PuzzleStatus
     @puzzle.mask.redraw_mask()
     @puzzle.indicator.decrement()
     @unset_pieces.splice(@unset_pieces.indexOf(@sym),1)
-    pc = Math.floor(@pieces_in_puzzle*Math.random())
-    @sym = @unset_pieces[pc]
-    @puzzle.piece.construct_piece(@sym)
+    @pick_puzzle_piece()
 
 
   start_first_piece: () ->
     @puzzle.colors.new_rotation()
     @puzzle.indicator.start_indicator()
-    pc = Math.floor(@pieces_in_puzzle*Math.random())
-    @sym = @unset_pieces[pc]
+    @pick_puzzle_piece()
+
+
+  pick_puzzle_piece: () ->
+    ok = "no"
+    until ok == "yes"
+      pc = Math.floor(@pieces_in_puzzle*Math.random())
+      @sym = @unset_pieces[pc]
+      ok = "yes" unless ( (@sym == "h") and (@h_ok == "no") ) or ( (@sym == "i") and (@i_ok == "no") )
+      @h_ok = "yes" if @sym in ["b", "c", "g", "l", "m"]
+      @i_ok = "yes" if @sym in ["d", "e", "j", "n", "o"]
     @puzzle.piece.construct_piece(@sym)
 
 
