@@ -1,9 +1,6 @@
-source 'http://mirror1.ops.rhcloud.com/mirror/ruby/'
+source "https://rubygems.org"
 
-gem 'rack'
+ruby "3.1.2"
 
 gem 'sinatra'
-
-gem 'coffee-script'
-
 gem 'json'
