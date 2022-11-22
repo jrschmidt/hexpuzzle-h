@@ -2,7 +2,9 @@ require 'rubygems'
 
 require 'json'
 
-set :server, %w[webrick thin mongrel puma]
+require 'sinatra'
+
+set :server, %w[webrick thin mongrel]
 
 set :port, 4566
 
