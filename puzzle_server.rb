@@ -1,15 +1,8 @@
-
 require 'rubygems'
-
-require 'sinatra'
-
-require 'coffee-script'
 
 require 'json'
 
-require 'pry'
-
-set :server, %w[webrick thin mongrel]
+set :server, %w[webrick thin mongrel puma]
 
 set :port, 4566
 
